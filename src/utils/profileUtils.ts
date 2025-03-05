@@ -6,8 +6,14 @@ export const uploadAvatar = async (userId: string, avatarFile: File | null, curr
   if (!avatarFile) return currentImageUrl || null;
   
   try {
-    // Validate the userId is a proper UUID
-    if (!userId || !isValidUUID(userId)) {
+    // Special handling for admin user
+    if (userId === '1') {
+      console.log('Admin user detected, skipping avatar upload');
+      return currentImageUrl || null;
+    }
+    
+    // Validate the userId is a proper UUID for normal users
+    if (!isValidUUID(userId)) {
       console.error('Invalid user ID for avatar upload:', userId);
       return currentImageUrl || null;
     }
@@ -83,8 +89,31 @@ export const updateUserProfile = async (
   }
 ) => {
   try {
-    // Validate the userId is a proper UUID
-    if (!userId || !isValidUUID(userId)) {
+    // Special handling for admin user
+    if (userId === '1') {
+      console.log('Admin user detected, storing profile data in localStorage only');
+      
+      // For admin user, just store the profile data in localStorage
+      const adminUser = JSON.parse(localStorage.getItem('oksnoen-admin-user') || '{}');
+      const updatedAdminUser = {
+        ...adminUser,
+        phone: profileData.phone,
+        age: profileData.age,
+        hasDriverLicense: profileData.has_driving_license,
+        hasCar: profileData.has_car,
+        hasBoatLicense: profileData.has_boat_license,
+        rappellingAbility: profileData.rappelling_ability,
+        ziplineAbility: profileData.zipline_ability,
+        climbingAbility: profileData.climbing_ability,
+        image: profileData.avatar_url
+      };
+      
+      localStorage.setItem('oksnoen-admin-user', JSON.stringify(updatedAdminUser));
+      return;
+    }
+    
+    // Validate the userId is a proper UUID for normal users
+    if (!isValidUUID(userId)) {
       console.error('Invalid user ID for profile update:', userId);
       throw new Error(`Invalid user ID format: ${userId}`);
     }

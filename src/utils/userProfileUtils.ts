@@ -104,6 +104,9 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
 export const needsProfileCompletion = (user: User | null): boolean => {
   if (!user) return false;
   
+  // Admin user always has a complete profile
+  if (user.id === '1') return false;
+  
   return (
     !user.phone || 
     user.hasDriverLicense === undefined || 

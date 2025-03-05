@@ -18,6 +18,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Function to refresh user data
   const refreshUser = async () => {
+    // Check for admin user in localStorage first
+    const adminUser = localStorage.getItem('oksnoen-admin-user');
+    if (adminUser) {
+      setUser(JSON.parse(adminUser));
+      console.log('Admin user refreshed from localStorage');
+      return;
+    }
+    
     if (session) {
       try {
         const userProfile = await fetchUserProfile(session);
