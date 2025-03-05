@@ -62,6 +62,20 @@ const Sidebar: React.FC = () => {
     setIsCollapsed(!isCollapsed);
   };
 
+  // Get the appropriate dashboard path based on user role
+  const getDashboardPath = () => {
+    switch (user.role) {
+      case 'admin':
+        return '/dashboard/admin';
+      case 'nurse':
+        return '/dashboard/nurse';
+      case 'leader':
+        return '/dashboard/leader';
+      default:
+        return '/dashboard';
+    }
+  };
+
   return (
     <div 
       className={cn(
@@ -107,14 +121,15 @@ const Sidebar: React.FC = () => {
       
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto px-3 py-2">
-        <SidebarLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" isCollapsed={isCollapsed} />
+        <SidebarLink to={getDashboardPath()} icon={LayoutDashboard} label="Dashboard" isCollapsed={isCollapsed} />
         <SidebarLink to="/cabins" icon={Home} label="Hytter" isCollapsed={isCollapsed} />
         <SidebarLink to="/children" icon={Users} label="Barn" isCollapsed={isCollapsed} />
         <SidebarLink to="/activities" icon={ClipboardCheck} label="Aktiviteter" isCollapsed={isCollapsed} />
         <SidebarLink to="/profile" icon={User} label="Min Profil" isCollapsed={isCollapsed} />
         
+        {/* Only show settings link to admin users */}
         {user.role === 'admin' && (
-          <SidebarLink to="/settings" icon={Settings} label="Innstillinger" isCollapsed={isCollapsed} />
+          <SidebarLink to="/dashboard/admin" icon={Settings} label="Admin" isCollapsed={isCollapsed} />
         )}
       </div>
       
