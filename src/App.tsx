@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProfileCompletion from "./pages/ProfileCompletion"; 
+import ProfilePage from "./pages/ProfilePage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
@@ -96,6 +97,18 @@ const App = () => (
                   element={<ProfileCompletion />} 
                   allowedRoles={['admin', 'nurse', 'leader']} 
                 />
+              } 
+            />
+            
+            <Route 
+              path="/profile" 
+              element={
+                <ProfileCompletionCheck>
+                  <ProtectedRoute 
+                    element={<ProfilePage />} 
+                    allowedRoles={['admin', 'nurse', 'leader']} 
+                  />
+                </ProfileCompletionCheck>
               } 
             />
             
