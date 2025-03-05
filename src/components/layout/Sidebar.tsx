@@ -104,7 +104,7 @@ const Sidebar: React.FC = () => {
       )}>
         <div className="w-8 h-8 rounded-full bg-muted overflow-hidden">
           <img 
-            src={user.imageUrl || "/placeholder.svg"} 
+            src={user.image || "/placeholder.svg"} 
             alt={user.name} 
             className="w-full h-full object-cover"
           />
