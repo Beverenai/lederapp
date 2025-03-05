@@ -13,7 +13,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   session: Session | null;
   refreshUser: () => Promise<void>;
-  authInitialized: boolean; // Add the authInitialized property
+  authInitialized: boolean;
 }
 
 // Define the provider props

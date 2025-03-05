@@ -10,8 +10,8 @@ export const useSupabaseAuth = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Login function
-  const login = async (email: string, password: string) => {
+  // Login function - now returns void as expected by the AuthContext type
+  const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     setError(null);
     
@@ -42,7 +42,8 @@ export const useSupabaseAuth = () => {
       }
       
       console.log('Login successful:', data);
-      return data;
+      // No longer returning data - the auth state change event will handle this
+      return;
     } catch (err: any) {
       console.error('Login process error:', err.message);
       setError(err.message);
