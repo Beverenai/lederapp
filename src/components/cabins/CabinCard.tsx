@@ -4,40 +4,25 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Home, Users, User } from 'lucide-react';
+import { Home, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface CabinChild {
-  id: string;
-  name: string;
-  age: number;
-  profileImage: string;
-}
-
-interface CabinLeader {
-  id: string;
-  name: string;
-  profileImage: string;
-}
+import { Cabin, User } from '@/types/models';
 
 interface CabinCardProps {
-  id: string;
-  name: string;
-  capacity: number;
-  children: CabinChild[];
-  leader?: CabinLeader;
+  cabin: Cabin;
+  leader?: User;
+  childCount: number;
   onClick?: () => void;
 }
 
 const CabinCard: React.FC<CabinCardProps> = ({
-  id,
-  name,
-  capacity,
-  children,
+  cabin,
   leader,
+  childCount,
   onClick
 }) => {
-  const occupancyPercentage = (children.length / capacity) * 100;
+  const { name, capacity } = cabin;
+  const occupancyPercentage = (childCount / capacity) * 100;
   
   return (
     <Card className="hover-scale glass-card">
@@ -47,8 +32,8 @@ const CabinCard: React.FC<CabinCardProps> = ({
             <Home className="h-5 w-5 mr-2 text-oksnoen-green" />
             {name}
           </CardTitle>
-          <Badge variant={children.length === capacity ? "default" : "outline"}>
-            {children.length} / {capacity}
+          <Badge variant={childCount === capacity ? "default" : "outline"}>
+            {childCount} / {capacity}
           </Badge>
         </div>
       </CardHeader>
@@ -77,7 +62,7 @@ const CabinCard: React.FC<CabinCardProps> = ({
             <div className="text-sm font-medium mb-2">Leder:</div>
             <div className="flex items-center bg-muted/40 p-2 rounded-lg">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={leader.profileImage} alt={leader.name} />
+                <AvatarImage src={leader.image} alt={leader.name} />
                 <AvatarFallback>{leader.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="ml-3">
@@ -88,21 +73,12 @@ const CabinCard: React.FC<CabinCardProps> = ({
           </div>
         )}
         
-        {/* Children */}
+        {/* Children count */}
         <div>
           <div className="text-sm font-medium mb-2">Barn:</div>
-          <div className="flex flex-wrap gap-1">
-            {children.slice(0, 5).map((child) => (
-              <Avatar key={child.id} className="h-8 w-8 border-2 border-background">
-                <AvatarImage src={child.profileImage} alt={child.name} />
-                <AvatarFallback>{child.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-            ))}
-            {children.length > 5 && (
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                +{children.length - 5}
-              </div>
-            )}
+          <div className="flex items-center">
+            <Users className="h-5 w-5 mr-2 text-muted-foreground" />
+            <span>{childCount} barn i hytta</span>
           </div>
         </div>
       </CardContent>
