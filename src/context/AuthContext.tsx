@@ -15,6 +15,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [authStateChangeCount, setAuthStateChangeCount] = useState(0);
   const { isLoading, setIsLoading, error, setError, login, logout } = useSupabaseAuth();
 
   // Function to refresh user data
@@ -99,6 +100,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.id);
         
+        // Prevent infinite loops by limiting auth state changes
+        setAuthStateChangeCount(prev => {
+          const newCount = prev + 1;
+          // If too many auth state changes happen quickly, we might be in a loop
+          if (newCount > 10 && new Date().getTime() - lastAuthChange < 5000) {
+            console.warn('Too many auth state changes, possible infinite loop');
+            return prev; // Don't increase the counter further
+          }
+          lastAuthChange = new Date().getTime();
+          return newCount;
+        });
+        
         // If admin user exists in localStorage, prioritize that
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
@@ -136,6 +149,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsLoading(false);
       }
     );
+
+    // Track the last auth change time to detect loops
+    let lastAuthChange = new Date().getTime();
 
     // Cleanup
     return () => {

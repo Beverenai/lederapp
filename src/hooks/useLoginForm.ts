@@ -34,8 +34,16 @@ export const useLoginForm = () => {
         
         toast.success('Innlogget som admin');
         
-        // Use direct window.location for guaranteed redirect
-        window.location.href = '/dashboard/admin';
+        // Navigate programmatically first
+        navigate('/dashboard/admin');
+        
+        // Use direct window.location as a fallback after a delay
+        setTimeout(() => {
+          if (window.location.pathname !== '/dashboard/admin') {
+            window.location.href = '/dashboard/admin';
+          }
+        }, 500);
+        
         return;
       }
       
@@ -44,13 +52,18 @@ export const useLoginForm = () => {
       
       toast.success('Innlogging vellykket!');
       
-      // Force redirect to dashboard using window.location
-      console.log('Login successful, redirecting to dashboard');
-      window.location.href = '/dashboard';
+      // Navigate programmatically first
+      navigate('/dashboard');
+      
+      // Use direct window.location as a fallback after a delay
+      setTimeout(() => {
+        if (window.location.pathname === '/') {
+          window.location.href = '/dashboard';
+        }
+      }, 500);
       
     } catch (err: any) {
       console.error('Login error:', err);
-      
       toast.error('Innlogging feilet. Sjekk brukernavn og passord.');
     } finally {
       setIsSubmitting(false);
