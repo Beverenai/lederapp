@@ -8,11 +8,19 @@ import { User, UserRole } from '@/types/models';
  */
 export const fetchUserProfile = async (userSession: Session): Promise<User | null> => {
   try {
+    if (!userSession?.user?.id) {
+      console.error('No user ID in session');
+      return null;
+    }
+    
+    const userId = userSession.user.id;
+    console.log('Fetching profile for user ID:', userId);
+    
     // Get the profile data directly (don't try to access auth.users table)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userSession.user.id)
+      .eq('id', userId)
       .maybeSingle();
 
     if (profileError) {

@@ -6,6 +6,12 @@ export const uploadAvatar = async (userId: string, avatarFile: File | null, curr
   if (!avatarFile) return currentImageUrl || null;
   
   try {
+    // Validate the userId is a proper UUID
+    if (!userId || !isValidUUID(userId)) {
+      console.error('Invalid user ID for avatar upload:', userId);
+      return currentImageUrl || null;
+    }
+    
     const fileExt = avatarFile.name.split('.').pop();
     const filePath = `${userId}/${Math.random().toString(36).slice(2)}.${fileExt}`;
     
@@ -77,6 +83,14 @@ export const updateUserProfile = async (
   }
 ) => {
   try {
+    // Validate the userId is a proper UUID
+    if (!userId || !isValidUUID(userId)) {
+      console.error('Invalid user ID for profile update:', userId);
+      throw new Error(`Invalid user ID format: ${userId}`);
+    }
+    
+    console.log('Updating profile for user ID:', userId);
+    
     // Check if profile exists first
     const { data: existingProfile, error: checkError } = await supabase
       .from('profiles')
@@ -148,3 +162,9 @@ export const updateUserProfile = async (
     throw err;
   }
 };
+
+// Helper function to validate UUID format
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}

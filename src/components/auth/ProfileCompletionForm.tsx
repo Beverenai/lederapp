@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,12 @@ const ProfileCompletionForm = () => {
   const [ziplineAbility, setZiplineAbility] = useState<AbilityOption>(user?.ziplineAbility || 'Nei');
   const [climbingAbility, setClimbingAbility] = useState<AbilityOption>(user?.climbingAbility || 'Nei');
   
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+  
   // Handle avatar change
   const handleAvatarChange = (file: File | null) => {
     setAvatarFile(file);
@@ -48,8 +54,11 @@ const ProfileCompletionForm = () => {
           description: 'Bruker ID mangler. Vennligst logg ut og inn igjen.',
           variant: 'destructive',
         });
+        setIsSubmitting(false);
         return;
       }
+      
+      console.log('Submitting profile with user ID:', user.id);
       
       // Upload avatar if selected
       const avatarUrl = await uploadAvatar(user.id, avatarFile, user.image);
@@ -88,6 +97,11 @@ const ProfileCompletionForm = () => {
       setIsSubmitting(false);
     }
   };
+  
+  // If no user is available, show loading state
+  if (!user) {
+    return <div className="container mx-auto max-w-lg py-8 px-4">Laster brukerdata...</div>;
+  }
   
   return (
     <div className="container mx-auto max-w-lg py-8 px-4">
