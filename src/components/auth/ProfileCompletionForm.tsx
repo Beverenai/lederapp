@@ -1,76 +1,97 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/AuthContext';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types/models';
 
-const ProfileCompletionForm: React.FC = () => {
-  const { user, session } = useAuth();
+const ProfileCompletionForm = () => {
+  const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.image || null);
+  
+  // Form data states
   const [phone, setPhone] = useState(user?.phone || '');
   const [hasDriverLicense, setHasDriverLicense] = useState(user?.hasDriverLicense || false);
   const [hasCar, setHasCar] = useState(user?.hasCar || false);
   const [hasBoatLicense, setHasBoatLicense] = useState(user?.hasBoatLicense || false);
-  const [rappellingAbility, setRappellingAbility] = useState<'Ja' | 'Nei' | 'Nesten'>(user?.rappellingAbility || 'Nei');
-  const [ziplineAbility, setZiplineAbility] = useState<'Ja' | 'Nei' | 'Nesten'>(user?.ziplineAbility || 'Nei');
-  const [climbingAbility, setClimbingAbility] = useState<'Ja' | 'Nei' | 'Nesten'>(user?.climbingAbility || 'Nei');
-  const [image, setImage] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | undefined>(user?.image);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rappellingAbility, setRappellingAbility] = useState(user?.rappellingAbility || 'Nei');
+  const [ziplineAbility, setZiplineAbility] = useState(user?.ziplineAbility || 'Nei');
+  const [climbingAbility, setClimbingAbility] = useState(user?.climbingAbility || 'Nei');
   
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Avatar upload handling
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setImage(e.target.files[0]);
-      setImageUrl(URL.createObjectURL(e.target.files[0]));
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      
+      // Create a preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
   
+  // Upload avatar to Supabase Storage
+  const uploadAvatar = async (userId: string): Promise<string | null> => {
+    if (!avatarFile) return user?.image || null;
+    
+    try {
+      const fileExt = avatarFile.name.split('.').pop();
+      const filePath = `${userId}/${Math.random().toString(36).slice(2)}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, avatarFile);
+      
+      if (uploadError) {
+        console.error('Avatar upload error:', uploadError);
+        return null;
+      }
+      
+      // Get the public URL
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      return data.publicUrl;
+    } catch (err) {
+      console.error('Avatar upload error:', err);
+      return null;
+    }
+  };
+  
+  // Submit profile completion
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user || !user.id) {
-      toast({
-        title: 'Feil',
-        description: 'Bruker ikke funnet. Vennligst logg inn på nytt.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
     setIsSubmitting(true);
     
     try {
-      // Upload image if selected
-      let avatarUrl = user.image || '';
-      
-      if (image) {
-        const fileExt = image.name.split('.').pop();
-        const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `avatars/${fileName}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, image);
-          
-        if (uploadError) throw uploadError;
-        
-        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        avatarUrl = urlData.publicUrl;
+      if (!user?.id) {
+        toast({
+          title: 'Feil',
+          description: 'Bruker ID mangler. Vennligst logg ut og inn igjen.',
+          variant: 'destructive',
+        });
+        return;
       }
       
-      // Update user profile
-      const { error: updateError } = await supabase
+      // Upload avatar if selected
+      const avatarUrl = await uploadAvatar(user.id);
+      
+      // Update profile in Supabase
+      const { error } = await supabase
         .from('profiles')
         .update({
           phone,
@@ -83,21 +104,26 @@ const ProfileCompletionForm: React.FC = () => {
           avatar_url: avatarUrl || user.image,
         })
         .eq('id', user.id);
-        
-      if (updateError) throw updateError;
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Refresh user data
+      await refreshUser();
       
       toast({
         title: 'Profil oppdatert',
-        description: 'Din profilinformasjon er nå oppdatert.',
+        description: 'Din profil er nå komplett!',
       });
       
       // Redirect to dashboard
       navigate('/dashboard');
-    } catch (err) {
-      console.error('Error updating profile:', err);
+    } catch (error: any) {
+      console.error('Profile completion error:', error);
       toast({
         title: 'Feil ved oppdatering',
-        description: 'Kunne ikke oppdatere profilen. Prøv igjen senere.',
+        description: error.message || 'Kunne ikke oppdatere profilen. Prøv igjen.',
         variant: 'destructive',
       });
     } finally {
@@ -106,145 +132,151 @@ const ProfileCompletionForm: React.FC = () => {
   };
   
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-background to-muted/30 p-4">
-      <Card className="w-full max-w-xl">
+    <div className="container mx-auto max-w-lg py-8 px-4">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Fullfør din profil</CardTitle>
+          <CardTitle className="text-2xl font-bold">Fullfør profilen din</CardTitle>
           <CardDescription>
-            Vennligst fyll ut litt mer informasjon om deg selv for å fullføre registreringen.
+            Vi trenger litt mer informasjon for å fullføre oppsettet av kontoen din.
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-            {/* Profile image upload */}
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Avatar Upload Section */}
             <div className="flex flex-col items-center space-y-4">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={imageUrl} />
-                <AvatarFallback className="text-xl">
-                  {user?.name?.split(' ').map(n => n[0]).join('') || '?'}
-                </AvatarFallback>
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={avatarPreview || ''} />
+                <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-center">
-                <Label htmlFor="profile-image" className="cursor-pointer text-primary hover:underline">
+                <Label htmlFor="avatar" className="cursor-pointer text-blue-600 hover:underline">
                   Last opp profilbilde
                 </Label>
                 <Input 
-                  id="profile-image" 
+                  id="avatar" 
                   type="file" 
                   accept="image/*" 
-                  onChange={handleImageChange} 
-                  className="hidden"
+                  className="hidden" 
+                  onChange={handleAvatarChange}
                 />
               </div>
             </div>
             
-            {/* Phone number */}
+            {/* Phone Number */}
             <div className="space-y-2">
               <Label htmlFor="phone">Telefonnummer</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Ditt telefonnummer"
-                value={phone}
+              <Input 
+                id="phone" 
+                placeholder="f.eks. 98765432" 
+                value={phone} 
                 onChange={(e) => setPhone(e.target.value)}
                 required
               />
             </div>
             
-            {/* Licenses and capabilities */}
+            {/* Checkboxes for licenses */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="hasDriverLicense" 
                   checked={hasDriverLicense} 
-                  onCheckedChange={(checked) => setHasDriverLicense(checked === true)}
+                  onCheckedChange={(checked) => 
+                    setHasDriverLicense(checked as boolean)
+                  }
                 />
-                <Label htmlFor="hasDriverLicense">Har førerkort</Label>
+                <Label htmlFor="hasDriverLicense">Jeg har førerkort</Label>
               </div>
               
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="hasCar" 
                   checked={hasCar} 
-                  onCheckedChange={(checked) => setHasCar(checked === true)}
+                  onCheckedChange={(checked) => 
+                    setHasCar(checked as boolean)
+                  }
                 />
-                <Label htmlFor="hasCar">Har bil</Label>
+                <Label htmlFor="hasCar">Jeg har bil tilgjengelig</Label>
               </div>
               
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="hasBoatLicense" 
                   checked={hasBoatLicense} 
-                  onCheckedChange={(checked) => setHasBoatLicense(checked === true)}
+                  onCheckedChange={(checked) => 
+                    setHasBoatLicense(checked as boolean)
+                  }
                 />
-                <Label htmlFor="hasBoatLicense">Har båtlappen</Label>
+                <Label htmlFor="hasBoatLicense">Jeg har båtlappen</Label>
               </div>
             </div>
             
-            {/* Activity abilities */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="rappellingAbility">Rappellering</Label>
-                <Select 
-                  value={rappellingAbility} 
-                  onValueChange={(value) => setRappellingAbility(value as 'Ja' | 'Nei' | 'Nesten')}
-                >
-                  <SelectTrigger id="rappellingAbility">
-                    <SelectValue placeholder="Velg" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ja">Ja</SelectItem>
-                    <SelectItem value="Nei">Nei</SelectItem>
-                    <SelectItem value="Nesten">Nesten</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Ability Selects */}
+            <div className="space-y-4">
+              <Label>Dine ferdigheter</Label>
               
-              <div className="space-y-2">
-                <Label htmlFor="ziplineAbility">Zipline</Label>
-                <Select 
-                  value={ziplineAbility} 
-                  onValueChange={(value) => setZiplineAbility(value as 'Ja' | 'Nei' | 'Nesten')}
-                >
-                  <SelectTrigger id="ziplineAbility">
-                    <SelectValue placeholder="Velg" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ja">Ja</SelectItem>
-                    <SelectItem value="Nei">Nei</SelectItem>
-                    <SelectItem value="Nesten">Nesten</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="climbingAbility">Klatring</Label>
-                <Select 
-                  value={climbingAbility} 
-                  onValueChange={(value) => setClimbingAbility(value as 'Ja' | 'Nei' | 'Nesten')}
-                >
-                  <SelectTrigger id="climbingAbility">
-                    <SelectValue placeholder="Velg" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ja">Ja</SelectItem>
-                    <SelectItem value="Nei">Nei</SelectItem>
-                    <SelectItem value="Nesten">Nesten</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="rappellingAbility">Rappellering</Label>
+                  <Select 
+                    value={rappellingAbility} 
+                    onValueChange={setRappellingAbility}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Velg nivå" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ja">Ja</SelectItem>
+                      <SelectItem value="Nei">Nei</SelectItem>
+                      <SelectItem value="Nesten">Nesten</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="ziplineAbility">Tbane-oppsett</Label>
+                  <Select 
+                    value={ziplineAbility} 
+                    onValueChange={setZiplineAbility}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Velg nivå" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ja">Ja</SelectItem>
+                      <SelectItem value="Nei">Nei</SelectItem>
+                      <SelectItem value="Nesten">Nesten</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="climbingAbility">Klatring</Label>
+                  <Select 
+                    value={climbingAbility} 
+                    onValueChange={setClimbingAbility}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Velg nivå" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ja">Ja</SelectItem>
+                      <SelectItem value="Nei">Nei</SelectItem>
+                      <SelectItem value="Nesten">Nesten</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-          </CardContent>
-          <CardFooter>
+            
             <Button 
               type="submit" 
-              className="w-full bg-oksnoen-green hover:bg-oksnoen-green/90 text-white"
+              className="w-full" 
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Lagrer...' : 'Fullfør oppsett'}
+              {isSubmitting ? 'Lagrer...' : 'Fullfør profil'}
             </Button>
-          </CardFooter>
-        </form>
+          </form>
+        </CardContent>
       </Card>
     </div>
   );
