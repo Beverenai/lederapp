@@ -15,20 +15,13 @@ const Index: React.FC = () => {
     
     if (authInitialized && !isLoading && isAuthenticated) {
       console.log('User is authenticated, redirecting to dashboard');
-      // Use a timeout to ensure state updates have propagated
-      const redirectTimer = setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 500);
       
-      return () => clearTimeout(redirectTimer);
+      // Force redirect to dashboard with a small delay to ensure context updates
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
     }
-    
-    // Prevent infinite redirect loops
-    if (!isLoading && isAuthenticated && redirectAttempts > 3) {
-      console.error('Too many redirect attempts, might be an authentication issue');
-      toast.error('Det oppstod et problem med innloggingen. Prøv igjen senere.');
-    }
-  }, [isAuthenticated, isLoading, navigate, redirectAttempts, authInitialized]);
+  }, [isAuthenticated, isLoading, navigate, authInitialized]);
   
   // Show more detailed loading state with explicit conditions
   if (!authInitialized || isLoading) {

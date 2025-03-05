@@ -17,7 +17,7 @@ const DashboardLayout: React.FC = () => {
     // If auth is initialized, not loading, and not authenticated, redirect to login
     if (authInitialized && !isLoading && !isAuthenticated) {
       console.log('Not authenticated in DashboardLayout, redirecting to login');
-      navigate('/', { replace: true });
+      window.location.href = '/';
     }
     
     // Welcome message on successful login
@@ -34,7 +34,16 @@ const DashboardLayout: React.FC = () => {
         <div className="text-sm text-gray-500">
           {!authInitialized 
             ? "Initialiserer autentisering..." 
-            : "Henter brukerdata og innstillinger..."}
+            : "Henter brukerdata..."}
+        </div>
+        <div className="text-xs text-gray-400 mt-4">
+          Dette skal bare ta noen sekunder.
+          Hvis det tar for lang tid, prøv å <button 
+            onClick={() => window.location.reload()} 
+            className="text-oksnoen-red underline"
+          >
+            laste siden på nytt
+          </button>
         </div>
       </div>
     );

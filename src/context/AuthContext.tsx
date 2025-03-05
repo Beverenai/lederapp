@@ -41,10 +41,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check for existing user session on mount
   useEffect(() => {
     const checkAuth = async () => {
-      setIsLoading(true);
-      console.log('Checking authentication status...');
-      
       try {
+        setIsLoading(true);
+        console.log('Checking authentication status...');
+        
         // Check for admin user in localStorage first
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
@@ -109,23 +109,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
         
-        setSession(newSession);
-        
-        if (newSession) {
-          try {
-            const userProfile = await fetchUserProfile(newSession);
-            console.log('User profile from auth change:', userProfile);
-            setUser(userProfile);
-          } catch (err) {
-            console.error('Error getting user profile:', err);
-            setUser(null);
-          } finally {
-            setIsLoading(false);
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          console.log('User signed in or token refreshed');
+          setSession(newSession);
+          
+          if (newSession) {
+            try {
+              setIsLoading(true);
+              const userProfile = await fetchUserProfile(newSession);
+              console.log('User profile from auth change:', userProfile);
+              setUser(userProfile);
+            } catch (err) {
+              console.error('Error getting user profile:', err);
+              setUser(null);
+            } finally {
+              setIsLoading(false);
+            }
           }
-        } else {
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           setUser(null);
-          setIsLoading(false);
+          setSession(null);
         }
+        
+        // Always ensure isLoading is false after auth state change
+        setIsLoading(false);
       }
     );
 

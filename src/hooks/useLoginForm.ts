@@ -32,43 +32,24 @@ export const useLoginForm = () => {
         // Set the admin user in context without going through Supabase
         localStorage.setItem('oksnoen-admin-user', JSON.stringify(adminUser));
         
-        uiToast({
-          title: 'Innlogget som admin',
-          description: 'Du er nå logget inn som administrator',
-        });
-        
         toast.success('Innlogget som admin');
         
-        // Use direct window.location for more reliable redirect
-        setTimeout(() => {
-          window.location.href = '/dashboard/admin';
-        }, 500);
+        // Use direct window.location for guaranteed redirect
+        window.location.href = '/dashboard/admin';
         return;
       }
       
       // Regular Supabase login for other users
       await login(email, password);
       
-      uiToast({
-        title: 'Innlogget',
-        description: 'Du er nå logget inn',
-      });
-      
       toast.success('Innlogging vellykket!');
       
-      // Use direct window.location for more reliable redirect
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 500);
+      // Force redirect to dashboard using window.location
+      console.log('Login successful, redirecting to dashboard');
+      window.location.href = '/dashboard';
       
     } catch (err: any) {
       console.error('Login error:', err);
-      
-      uiToast({
-        title: 'Feil ved innlogging',
-        description: err.message || 'Kunne ikke logge inn. Prøv igjen.',
-        variant: 'destructive',
-      });
       
       toast.error('Innlogging feilet. Sjekk brukernavn og passord.');
     } finally {
