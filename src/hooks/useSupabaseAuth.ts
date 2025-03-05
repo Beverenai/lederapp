@@ -38,6 +38,7 @@ export const useSupabaseAuth = () => {
       }
       
       // For regular users, attempt email login
+      console.log('Standard login with:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -58,7 +59,7 @@ export const useSupabaseAuth = () => {
         }
       }
       
-      console.log('Login successful, data:', data);
+      console.log('Login successful, data:', data ? 'Session found' : 'No session');
       return;
     } catch (err: any) {
       console.error('Login process error:', err.message);
@@ -73,6 +74,7 @@ export const useSupabaseAuth = () => {
   const logout = async () => {
     try {
       console.log('Starting logout process');
+      
       // Clear admin user if it exists
       const adminUser = localStorage.getItem('oksnoen-admin-user');
       if (adminUser) {
@@ -80,11 +82,19 @@ export const useSupabaseAuth = () => {
         localStorage.removeItem('oksnoen-admin-user');
       }
       
-      await supabase.auth.signOut();
+      // Perform Supabase signout
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Logout error from Supabase:', error);
+        throw error;
+      }
+      
       console.log('Logged out successfully');
       // Session and user will be cleared by the onAuthStateChange handler
     } catch (err) {
       console.error('Logout error:', err);
+      throw err;
     }
   };
 

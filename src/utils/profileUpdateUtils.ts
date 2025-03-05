@@ -24,6 +24,8 @@ export const updateUserProfile = async (
   }
 ) => {
   try {
+    console.log('Starting profile update for user ID:', userId);
+    
     // Special handling for admin user
     if (userId === '1') {
       console.log('Admin user detected, storing profile data in localStorage only');
@@ -41,18 +43,19 @@ export const updateUserProfile = async (
         ziplineAbility: profileData.zipline_ability,
         climbingAbility: profileData.climbing_ability,
         image: profileData.avatar_url,
-        name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
+        name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || adminUser.name,
         notes: profileData.notes,
         team: profileData.team
       };
       
       localStorage.setItem('oksnoen-admin-user', JSON.stringify(updatedAdminUser));
+      console.log('Admin user profile updated in localStorage:', updatedAdminUser);
       return;
     }
     
     // Validate the userId is a proper UUID for normal users
     if (!isValidUUID(userId)) {
-      console.error('Invalid user ID for profile update:', userId);
+      console.error('Invalid user ID format for profile update:', userId);
       throw new Error(`Invalid user ID format: ${userId}`);
     }
     
@@ -61,6 +64,7 @@ export const updateUserProfile = async (
     await updateProfileInDatabase(userId, profileData);
     await updateUserMetadata(profileData);
     
+    console.log('Profile update completed successfully');
   } catch (err) {
     console.error('Profile update error:', err);
     throw err;
@@ -71,70 +75,68 @@ export const updateUserProfile = async (
  * Update or create profile in the database
  */
 async function updateProfileInDatabase(userId: string, profileData: any) {
-  // Check if profile exists first
+  console.log('Checking if profile exists for user:', userId);
+  
+  // Check if profile exists first with better error handling
   const { data: existingProfile, error: checkError } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id')
     .eq('id', userId)
     .maybeSingle();
   
-  if (checkError && !checkError.message.includes('No rows found')) {
-    console.error('Profile check error:', checkError);
-    throw checkError;
+  if (checkError) {
+    console.error('Error checking if profile exists:', checkError);
+    throw new Error(`Failed to check existing profile: ${checkError.message}`);
   }
   
-  // If profile doesn't exist, create it
+  console.log('Existing profile check result:', existingProfile ? 'Profile exists' : 'No profile found');
+  
+  // Create the profile data object with all the fields
+  const profileUpdateData = {
+    phone: profileData.phone,
+    age: profileData.age,
+    has_driving_license: profileData.has_driving_license,
+    has_car: profileData.has_car,
+    has_boat_license: profileData.has_boat_license,
+    rappelling_ability: profileData.rappelling_ability,
+    zipline_ability: profileData.zipline_ability,
+    climbing_ability: profileData.climbing_ability,
+    avatar_url: profileData.avatar_url,
+    first_name: profileData.first_name,
+    last_name: profileData.last_name,
+    notes: profileData.notes,
+    team: profileData.team,
+    // If we're inserting a new profile, we need to include the id
+    ...(existingProfile ? {} : { id: userId })
+  };
+  
+  // Determine whether to insert or update
   if (!existingProfile) {
     console.log('Creating new profile for user', userId);
     const { error: insertError } = await supabase
       .from('profiles')
-      .insert({
-        id: userId,
-        phone: profileData.phone,
-        age: profileData.age,
-        has_driving_license: profileData.has_driving_license,
-        has_car: profileData.has_car,
-        has_boat_license: profileData.has_boat_license,
-        rappelling_ability: profileData.rappelling_ability,
-        zipline_ability: profileData.zipline_ability,
-        climbing_ability: profileData.climbing_ability,
-        avatar_url: profileData.avatar_url,
-        first_name: profileData.first_name,
-        last_name: profileData.last_name,
-        notes: profileData.notes,
-        team: profileData.team
-      });
+      .insert(profileUpdateData);
     
     if (insertError) {
       console.error('Profile insert error:', insertError);
-      throw insertError;
+      throw new Error(`Failed to create profile: ${insertError.message}`);
     }
+    
+    console.log('Profile created successfully');
   } else {
     // Update existing profile
     console.log('Updating existing profile for user', userId);
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({
-        phone: profileData.phone,
-        age: profileData.age,
-        has_driving_license: profileData.has_driving_license,
-        has_car: profileData.has_car,
-        has_boat_license: profileData.has_boat_license,
-        rappelling_ability: profileData.rappelling_ability,
-        zipline_ability: profileData.zipline_ability,
-        climbing_ability: profileData.climbing_ability,
-        avatar_url: profileData.avatar_url,
-        first_name: profileData.first_name,
-        last_name: profileData.last_name,
-        notes: profileData.notes,
-        team: profileData.team
-      })
+      .update(profileUpdateData)
       .eq('id', userId);
     
     if (updateError) {
       console.error('Profile update error:', updateError);
-      throw updateError;
+      throw new Error(`Failed to update profile: ${updateError.message}`);
     }
+    
+    console.log('Profile updated successfully');
   }
 }
 
@@ -142,23 +144,33 @@ async function updateProfileInDatabase(userId: string, profileData: any) {
  * Update user metadata in Supabase Auth
  */
 async function updateUserMetadata(profileData: any) {
-  const { error: metadataError } = await supabase.auth.updateUser({
-    data: {
-      phone: profileData.phone,
-      age: profileData.age,
-      hasDriverLicense: profileData.has_driving_license,
-      hasCar: profileData.has_car,
-      hasBoatLicense: profileData.has_boat_license,
-      rappellingAbility: profileData.rappelling_ability,
-      ziplineAbility: profileData.zipline_ability,
-      climbingAbility: profileData.climbing_ability,
-      firstName: profileData.first_name,
-      lastName: profileData.last_name
+  try {
+    console.log('Updating user metadata in Auth');
+    
+    const { error: metadataError } = await supabase.auth.updateUser({
+      data: {
+        phone: profileData.phone,
+        age: profileData.age,
+        hasDriverLicense: profileData.has_driving_license,
+        hasCar: profileData.has_car,
+        hasBoatLicense: profileData.has_boat_license,
+        rappellingAbility: profileData.rappelling_ability,
+        ziplineAbility: profileData.zipline_ability,
+        climbingAbility: profileData.climbing_ability,
+        firstName: profileData.first_name,
+        lastName: profileData.last_name
+      }
+    });
+    
+    if (metadataError) {
+      console.error('User metadata update error:', metadataError);
+      // Log but don't throw error here, as the profile update is more important
+      console.warn('Continuing despite metadata update error');
+    } else {
+      console.log('User metadata updated successfully');
     }
-  });
-  
-  if (metadataError) {
-    console.error('User metadata update error:', metadataError);
-    // Don't throw error here, the profile update is more important
+  } catch (err) {
+    console.error('Unexpected error updating user metadata:', err);
+    console.warn('Continuing despite metadata update error');
   }
 }

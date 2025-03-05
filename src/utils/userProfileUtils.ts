@@ -24,10 +24,10 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
         .eq('id', userId)
         .maybeSingle();
 
-      if (profileError) {
+      if (profileError && !profileError.message.includes('No rows found')) {
         console.error('Error fetching profile:', profileError);
-        // Instead of throwing error, continue with metadata-only profile
-        console.log('Using fallback profile from auth metadata');
+        // Instead of throwing, continue with metadata-only profile
+        console.log('Using fallback profile from auth metadata due to error');
       }
 
       // Get metadata from the session's user object
@@ -37,11 +37,11 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
       console.log('Auth user metadata:', metadata);
 
       if (profile) {
-        console.log('Profile data:', profile);
+        console.log('Profile data found in database:', profile.id);
         // Convert Supabase profile to our User type
         const userData: User = {
           id: profile.id,
-          name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Bruker',
+          name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || authUser.email?.split('@')[0] || 'Bruker',
           email: profile.email || authUser.email || '',
           role: (profile.role as UserRole) || 'leader',
           image: profile.avatar_url,
@@ -59,11 +59,11 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
           climbingAbility: profile.climbing_ability as any,
         };
 
-        console.log('Converted user data:', userData);
+        console.log('Converted user data:', userData.id, userData.role);
         return userData;
       } else {
         // If no profile found or error, create user from auth metadata
-        console.log('Creating user from auth metadata');
+        console.log('No profile found, creating user from auth metadata');
         
         // Extract role from metadata, default to leader
         const role = metadata.role || 'leader';
@@ -76,7 +76,7 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
           role: role as UserRole,
           // If metadata contains additional profile fields, use them
           phone: metadata.phone,
-          hasDriverLicense: metadata.hasDrivingLicense,
+          hasDriverLicense: metadata.hasDriverLicense,
           hasCar: metadata.hasCar,
           hasBoatLicense: metadata.hasBoatLicense,
           rappellingAbility: metadata.rappellingAbility,
@@ -84,7 +84,7 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
           climbingAbility: metadata.climbingAbility
         };
         
-        console.log('Created user from metadata:', userData);
+        console.log('Created user from metadata:', userData.id, userData.role);
         return userData;
       }
     } catch (err) {
