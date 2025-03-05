@@ -39,7 +39,7 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
       // Convert Supabase profile to our User type
       const userData: User = {
         id: profile.id,
-        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Bruker',
         email: profile.email || authUser.email || '',
         role: (profile.role as UserRole) || 'leader',
         image: profile.avatar_url,
@@ -68,7 +68,7 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
         first_name: metadata.firstName || '',
         last_name: metadata.lastName || '',
         email: authUser.email,
-        role: 'leader' as UserRole,
+        role: metadata.role || 'leader' as UserRole,
       };
       
       console.log('Creating new profile:', newProfile);
@@ -87,9 +87,9 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
       // Set user with basic data - needs to complete profile
       return {
         id: authUser.id,
-        name: `${metadata.firstName || ''} ${metadata.lastName || ''}`.trim(),
+        name: `${metadata.firstName || ''} ${metadata.lastName || ''}`.trim() || authUser.email || 'Ny bruker',
         email: authUser.email || '',
-        role: 'leader',
+        role: metadata.role || 'leader',
         // These fields are intentionally undefined to trigger profile completion
         phone: undefined,
         hasDriverLicense: undefined,

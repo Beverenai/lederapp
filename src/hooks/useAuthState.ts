@@ -23,7 +23,7 @@ export const useAuthState = () => {
       try {
         const parsedUser = JSON.parse(adminUser);
         setUser(parsedUser);
-        console.log('Using admin user from localStorage');
+        console.log('Using admin user from localStorage:', parsedUser);
         return;
       } catch (err) {
         console.error('Error parsing admin user:', err);
@@ -97,6 +97,7 @@ export const useAuthState = () => {
           }
         } else {
           console.log('No active session found');
+          setUser(null);
         }
       } catch (err) {
         console.error('Auth check error:', err);

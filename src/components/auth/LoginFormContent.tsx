@@ -19,6 +19,7 @@ const LoginFormContent: React.FC = () => {
 
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   const validateInputs = () => {
     let valid = true;
@@ -26,6 +27,7 @@ const LoginFormContent: React.FC = () => {
     // Reset error states
     setEmailError('');
     setPasswordError('');
+    setLoginError('');
     
     // Validate email
     if (!email) {
@@ -49,10 +51,11 @@ const LoginFormContent: React.FC = () => {
     }
     
     try {
+      setLoginError('');
       await handleLogin(e);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login form submission error:', error);
-      toast.error('Kunne ikke logge inn. Vennligst prøv igjen.');
+      setLoginError(error.message || 'Kunne ikke logge inn. Vennligst prøv igjen.');
     }
   };
 
@@ -93,6 +96,15 @@ const LoginFormContent: React.FC = () => {
         />
         {passwordError && <p className="text-red-500 text-xs">{passwordError}</p>}
       </div>
+      
+      {loginError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            <span>{loginError}</span>
+          </div>
+        </div>
+      )}
       
       {/* Info about test account */}
       <div className="text-xs text-gray-500 italic flex items-start gap-1">

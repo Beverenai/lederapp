@@ -40,8 +40,7 @@ export const useSupabaseAuth = () => {
         }
       }
       
-      console.log('Login successful:', data);
-      // Don't return data, just let the auth state change listener handle it
+      console.log('Login successful, data:', data);
       return;
     } catch (err: any) {
       console.error('Login process error:', err.message);
