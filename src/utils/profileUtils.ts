@@ -9,20 +9,36 @@ export const uploadAvatar = async (userId: string, avatarFile: File | null, curr
     const fileExt = avatarFile.name.split('.').pop();
     const filePath = `${userId}/${Math.random().toString(36).slice(2)}.${fileExt}`;
     
-    // Create a storage bucket if it doesn't exist
-    const { error: bucketError } = await supabase.storage
-      .getBucket('avatars');
-    
-    if (bucketError && bucketError.message.includes('The resource was not found')) {
-      // Need to create the bucket
-      console.log('Creating avatars bucket');
-      const { error: createBucketError } = await supabase.storage
-        .createBucket('avatars', {
-          public: true
-        });
-      
-      if (createBucketError) {
-        console.error('Error creating bucket:', createBucketError);
+    // Check if bucket exists and create it if needed
+    try {
+      const { data: bucketData } = await supabase.storage.getBucket('avatars');
+      if (!bucketData) {
+        console.log('Creating avatars bucket');
+        const { error: createBucketError } = await supabase.storage
+          .createBucket('avatars', {
+            public: true
+          });
+        
+        if (createBucketError) {
+          console.error('Error creating bucket:', createBucketError);
+          return null;
+        }
+      }
+    } catch (bucketError: any) {
+      if (bucketError.message && bucketError.message.includes('The resource was not found')) {
+        // Need to create the bucket
+        console.log('Creating avatars bucket');
+        const { error: createBucketError } = await supabase.storage
+          .createBucket('avatars', {
+            public: true
+          });
+        
+        if (createBucketError) {
+          console.error('Error creating bucket:', createBucketError);
+          return null;
+        }
+      } else {
+        console.error('Bucket check error:', bucketError);
         return null;
       }
     }
@@ -66,17 +82,30 @@ export const updateUserProfile = async (
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     
     if (checkError && !checkError.message.includes('No rows found')) {
+      console.error('Profile check error:', checkError);
       throw checkError;
     }
     
     // If profile doesn't exist, create it
     if (!existingProfile) {
+      console.log('Creating new profile for user', userId);
       const { error: insertError } = await supabase
         .from('profiles')
-        .insert([{ id: userId, ...profileData }]);
+        .insert({
+          id: userId,
+          phone: profileData.phone,
+          age: profileData.age,
+          has_driving_license: profileData.has_driving_license,
+          has_car: profileData.has_car,
+          has_boat_license: profileData.has_boat_license,
+          rappelling_ability: profileData.rappelling_ability,
+          zipline_ability: profileData.zipline_ability,
+          climbing_ability: profileData.climbing_ability,
+          avatar_url: profileData.avatar_url
+        });
       
       if (insertError) {
         console.error('Profile insert error:', insertError);
@@ -84,6 +113,7 @@ export const updateUserProfile = async (
       }
     } else {
       // Update existing profile
+      console.log('Updating existing profile for user', userId);
       const { error: updateError } = await supabase
         .from('profiles')
         .update(profileData)
