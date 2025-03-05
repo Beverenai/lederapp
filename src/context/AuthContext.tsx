@@ -20,7 +20,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Get the current session
+        // Check for admin user in localStorage first
+        const adminUser = localStorage.getItem('oksnoen-admin-user');
+        if (adminUser) {
+          setUser(JSON.parse(adminUser));
+          setIsLoading(false);
+          return;
+        }
+        
+        // Get the current session from Supabase
         const { data } = await supabase.auth.getSession();
         
         if (data.session) {
@@ -40,6 +48,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Set up listener for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        // If admin user exists in localStorage, prioritize that
+        const adminUser = localStorage.getItem('oksnoen-admin-user');
+        if (adminUser) {
+          setUser(JSON.parse(adminUser));
+          setSession(null);
+          setIsLoading(false);
+          return;
+        }
+        
         setSession(newSession);
         
         if (newSession) {
@@ -59,8 +76,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [setIsLoading]);
 
+  // Update logout to also clear admin user
+  const handleLogout = async () => {
+    // Clear admin user if it exists
+    localStorage.removeItem('oksnoen-admin-user');
+    
+    // Regular Supabase logout
+    await logout();
+  };
+
   // Determine if user is authenticated
-  const isAuthenticated = !!session;
+  const isAuthenticated = !!user;
 
   // Create the context value
   const value: AuthContextType = {
@@ -68,7 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     error,
     login,
-    logout,
+    logout: handleLogout,
     isAuthenticated,
     session
   };

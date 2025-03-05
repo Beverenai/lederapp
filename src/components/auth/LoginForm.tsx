@@ -1,6 +1,6 @@
 
 import React, { useRef } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LoginFormContent from './LoginFormContent';
 import RegisterFormContent from './RegisterFormContent';
@@ -37,14 +37,6 @@ const LoginForm: React.FC = () => {
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex flex-col">
-        <p className="text-sm text-muted-foreground text-center mt-2">
-          Test brukere:<br />
-          Admin Adminsen / password<br />
-          Syke Pleier / password<br />
-          Lars Leder / password
-        </p>
-      </CardFooter>
     </Card>
   );
 };

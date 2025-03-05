@@ -18,6 +18,29 @@ export const useLoginForm = () => {
     setIsSubmitting(true);
     
     try {
+      // Check for admin credentials
+      if (email.toLowerCase() === 'admin' && password === 'admin') {
+        // Use the mock admin user from our data
+        const adminUser = {
+          id: '1',
+          name: 'Admin',
+          email: 'admin@oksnoen.no',
+          role: 'admin',
+        };
+        
+        // Set the admin user in context without going through Supabase
+        localStorage.setItem('oksnoen-admin-user', JSON.stringify(adminUser));
+        
+        toast({
+          title: 'Innlogget som admin',
+          description: 'Du er nå logget inn som administrator',
+        });
+        
+        navigate('/dashboard');
+        return;
+      }
+      
+      // Regular Supabase login for other users
       await login(email, password);
       toast({
         title: 'Innlogget',

@@ -18,11 +18,11 @@ const LoginFormContent: React.FC = () => {
   return (
     <form onSubmit={handleLogin} className="space-y-4 mt-4">
       <div className="space-y-2">
-        <Label htmlFor="email">E-post</Label>
+        <Label htmlFor="email">Brukernavn eller e-post</Label>
         <Input
           id="email"
-          type="email"
-          placeholder="Din e-postadresse"
+          type="text"
+          placeholder="Admin eller din e-postadresse"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
