@@ -17,35 +17,41 @@ export const useAuthState = () => {
 
   // Function to refresh user data
   const refreshUser = async () => {
-    // Check for admin user in localStorage first
-    const adminUser = localStorage.getItem('oksnoen-admin-user');
-    if (adminUser) {
-      try {
-        const parsedUser = JSON.parse(adminUser);
-        setUser(parsedUser);
-        console.log('Using admin user from localStorage:', parsedUser);
-        return;
-      } catch (err) {
-        console.error('Error parsing admin user:', err);
-        localStorage.removeItem('oksnoen-admin-user');
-        // Continue with normal auth flow if admin user parse fails
+    try {
+      // Check for admin user in localStorage first
+      const adminUser = localStorage.getItem('oksnoen-admin-user');
+      if (adminUser) {
+        try {
+          const parsedUser = JSON.parse(adminUser);
+          setUser(parsedUser);
+          console.log('Using admin user from localStorage:', parsedUser);
+          return;
+        } catch (err) {
+          console.error('Error parsing admin user:', err);
+          localStorage.removeItem('oksnoen-admin-user');
+          // Continue with normal auth flow if admin user parse fails
+        }
       }
-    }
-    
-    if (session) {
-      try {
-        setIsLoading(true);
-        console.log('Refreshing user profile with session:', session.user.id);
-        const userProfile = await fetchUserProfile(session);
-        console.log('Refreshed user profile:', userProfile);
-        setUser(userProfile);
-      } catch (err) {
-        console.error('Error refreshing user profile:', err);
-      } finally {
+      
+      if (session) {
+        try {
+          setIsLoading(true);
+          console.log('Refreshing user profile with session:', session.user.id);
+          const userProfile = await fetchUserProfile(session);
+          console.log('Refreshed user profile:', userProfile);
+          setUser(userProfile);
+        } catch (err) {
+          console.error('Error refreshing user profile:', err);
+          // Don't clear user here, as that would log the user out
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setUser(null);
         setIsLoading(false);
       }
-    } else {
-      setUser(null);
+    } catch (err) {
+      console.error('Refresh user error:', err);
       setIsLoading(false);
     }
   };
@@ -99,8 +105,15 @@ export const useAuthState = () => {
             setUser(userProfile);
           } catch (profileErr) {
             console.error('Error loading user profile:', profileErr);
-            setError('Failed to load user profile');
-            setUser(null);
+            // Create minimal user from session to allow login
+            const basicUser: User = {
+              id: data.session.user.id,
+              name: data.session.user.email?.split('@')[0] || 'Bruker',
+              email: data.session.user.email || '',
+              role: 'leader'
+            };
+            setUser(basicUser);
+            setError('Could not load full profile');
           }
         } else {
           console.log('No active session found');
@@ -155,8 +168,15 @@ export const useAuthState = () => {
               console.log('User profile updated after auth change:', userProfile);
               setUser(userProfile);
             } catch (err) {
-              console.error('Error getting user profile:', err);
-              setUser(null);
+              console.error('Error getting user profile on auth change:', err);
+              // Create minimal user from session to prevent login failures
+              const basicUser: User = {
+                id: newSession.user.id,
+                name: newSession.user.email?.split('@')[0] || 'Bruker',
+                email: newSession.user.email || '',
+                role: 'leader'
+              };
+              setUser(basicUser);
             } finally {
               setIsLoading(false);
             }

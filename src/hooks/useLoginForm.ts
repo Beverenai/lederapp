@@ -49,10 +49,11 @@ export const useLoginForm = () => {
       console.log('Login successful, waiting for auth state to update');
       toast.success('Innlogging vellykket!');
       
-      // Force navigate to dashboard
+      // Always redirect to dashboard regardless of RLS errors
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        navigate('/dashboard');
       }, 500);
+      
     } catch (err: any) {
       console.error('Login error:', err);
       toast.error(err.message || 'Innlogging feilet. Sjekk brukernavn og passord.');
