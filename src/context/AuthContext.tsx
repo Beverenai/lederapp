@@ -1,48 +1,18 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-// Define the user role types
-export type UserRole = 'admin' | 'nurse' | 'leader' | 'unauthenticated';
-
-// Define the user type
-export interface User {
-  id: string;
-  name: string;
-  role: UserRole;
-  imageUrl?: string;
-  cabin?: string;
-}
-
-// Mock users for development
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    name: 'Admin User',
-    role: 'admin',
-    imageUrl: '/placeholder.svg'
-  },
-  {
-    id: '2',
-    name: 'Nurse User',
-    role: 'nurse',
-    imageUrl: '/placeholder.svg'
-  },
-  {
-    id: '3',
-    name: 'Leader User',
-    role: 'leader',
-    imageUrl: '/placeholder.svg',
-    cabin: 'Fjellhytta'
-  }
-];
+import { supabase } from '@/integrations/supabase/client';
+import { Session } from '@supabase/supabase-js';
+import { User, UserRole } from '@/types/models';
 
 // Define the context interface
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   error: string | null;
-  login: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  session: Session | null;
 }
 
 // Create the context
@@ -56,6 +26,7 @@ interface AuthProviderProps {
 // Create the provider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,12 +34,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // In a real app, check localStorage or cookies for an auth token
-        // and validate it with an API call
-        const savedUser = localStorage.getItem('oksnoenUser');
+        // Get the current session
+        const { data } = await supabase.auth.getSession();
         
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
+        if (data.session) {
+          setSession(data.session);
+          await fetchUserProfile(data.session);
         }
       } catch (err) {
         console.error('Auth error:', err);
@@ -78,42 +49,135 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     checkAuth();
+
+    // Set up listener for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        setSession(newSession);
+        
+        if (newSession) {
+          await fetchUserProfile(newSession);
+        } else {
+          setUser(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    // Cleanup
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
+  // Fetch user profile from profiles table
+  const fetchUserProfile = async (userSession: Session) => {
+    try {
+      // Get the profile data
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userSession.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      if (profile) {
+        // Convert Supabase profile to our User type
+        const userData: User = {
+          id: profile.id,
+          name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+          email: profile.email || userSession.user.email || '',
+          role: (profile.role as UserRole) || 'leader',
+          image: profile.avatar_url,
+          age: profile.age,
+          skills: [], // Optional
+          notes: profile.notes,
+          activities: [], // Optional
+          team: profile.team,
+          phone: profile.phone,
+          hasDriverLicense: profile.has_driving_license,
+          hasCar: profile.has_car,
+          hasBoatLicense: profile.has_boat_license,
+          rappellingAbility: profile.rappelling_ability as any,
+          ziplineAbility: profile.zipline_ability as any,
+          climbingAbility: profile.climbing_ability as any,
+        };
+
+        setUser(userData);
+      } else {
+        // If no profile found, try to create one from auth metadata
+        const authUser = userSession.user;
+        const metadata = authUser.user_metadata || {};
+        
+        const newProfile = {
+          id: authUser.id,
+          first_name: metadata.firstName || '',
+          last_name: metadata.lastName || '',
+          email: authUser.email,
+          role: 'leader' as UserRole,
+        };
+        
+        // Insert the new profile
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert(newProfile);
+          
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+        }
+        
+        // Set user with basic data
+        setUser({
+          id: authUser.id,
+          name: `${metadata.firstName || ''} ${metadata.lastName || ''}`.trim(),
+          email: authUser.email || '',
+          role: 'leader',
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      setUser(null);
+    }
+  };
+
   // Login function
-  const login = async (username: string, password: string) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      // Mock authentication logic - in real app would use an API
-      const foundUser = MOCK_USERS.find(u => 
-        u.name.toLowerCase() === username.toLowerCase());
+      if (error) throw new Error(error.message);
       
-      if (foundUser && password === 'password') {
-        setUser(foundUser);
-        localStorage.setItem('oksnoenUser', JSON.stringify(foundUser));
-      } else {
-        throw new Error('Invalid username or password');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      // Session and user will be set by the onAuthStateChange handler
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
   // Logout function
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('oksnoenUser');
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      // Session and user will be cleared by the onAuthStateChange handler
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
   };
 
   // Determine if user is authenticated
-  const isAuthenticated = !!user;
+  const isAuthenticated = !!session;
 
   // Create the context value
   const value = {
@@ -122,7 +186,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error,
     login,
     logout,
-    isAuthenticated
+    isAuthenticated,
+    session
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
