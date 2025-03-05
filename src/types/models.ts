@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'nurse' | 'leader';
 
 export interface User {
@@ -8,7 +9,6 @@ export interface User {
   image?: string;
   age?: number;
   skills?: string[];
-  weeks?: number[];
   assignedCabinId?: string;
   notes?: string; // Notater spesifikt for lederen
   activities?: string[]; // Aktiviteter lederen kan lede
@@ -43,14 +43,6 @@ export interface Activity {
   comment?: string;
   completedAt?: Date;
   completedById?: string;
-}
-
-export interface Week {
-  id: number;
-  name: string;
-  startDate: Date;
-  endDate: Date;
-  isActive: boolean;
 }
 
 export interface Task {

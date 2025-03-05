@@ -32,7 +32,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, UserRole } from '@/types/models';
-import { mockUsers, mockCabins, mockWeeks } from '@/data/mockData';
+import { mockUsers, mockCabins } from '@/data/mockData';
 import { Pencil } from 'lucide-react';
 
 const LeaderManagement = () => {
@@ -76,7 +76,6 @@ const LeaderManagement = () => {
               <TableHead>Leder</TableHead>
               <TableHead>Rolle</TableHead>
               <TableHead>Hytte</TableHead>
-              <TableHead>Uker</TableHead>
               <TableHead>Ferdigheter</TableHead>
               <TableHead>Handlinger</TableHead>
             </TableRow>
@@ -119,15 +118,6 @@ const LeaderManagement = () => {
                     ? mockCabins.find(cabin => cabin.id === leader.assignedCabinId)?.name || '-'
                     : '-'
                   }
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {leader.weeks?.map(week => (
-                      <Badge key={week} variant="outline" className="text-xs">
-                        Uke {week}
-                      </Badge>
-                    )) || '-'}
-                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
@@ -174,24 +164,14 @@ interface LeaderEditDialogProps {
 
 const LeaderEditDialog = ({ leader, onSave }: LeaderEditDialogProps) => {
   const [editedLeader, setEditedLeader] = useState<User>({...leader});
-  const [selectedWeeks, setSelectedWeeks] = useState<number[]>(leader.weeks || []);
   
   const handleChange = (field: keyof User, value: any) => {
     setEditedLeader(prev => ({ ...prev, [field]: value }));
   };
   
-  const handleWeekToggle = (weekId: number) => {
-    setSelectedWeeks(prev => 
-      prev.includes(weekId)
-        ? prev.filter(id => id !== weekId)
-        : [...prev, weekId].sort((a, b) => a - b)
-    );
-  };
-  
   const handleSave = () => {
     onSave({
-      ...editedLeader,
-      weeks: selectedWeeks
+      ...editedLeader
     });
   };
   
@@ -296,24 +276,6 @@ const LeaderEditDialog = ({ leader, onSave }: LeaderEditDialogProps) => {
         </div>
         
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Uker</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {mockWeeks.map(week => (
-                <div key={week.id} className="flex items-center space-x-2">
-                  <input 
-                    type="checkbox" 
-                    id={`week-${week.id}`} 
-                    checked={selectedWeeks.includes(week.id)} 
-                    onChange={() => handleWeekToggle(week.id)} 
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <label htmlFor={`week-${week.id}`}>{week.name}</label>
-                </div>
-              ))}
-            </div>
-          </div>
-          
           <div className="space-y-2">
             <Label htmlFor="skills">Ferdigheter (kommaseparert)</Label>
             <Textarea 

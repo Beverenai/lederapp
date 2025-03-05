@@ -1,9 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import CabinList from '@/components/cabins/CabinList';
-import WeekSelector from '@/components/shared/WeekSelector';
 import LeaderManagement from '@/components/leaders/LeaderManagement';
-import { mockWeeks, mockUsers, getUsersByRole } from '@/data/mockData';
+import { mockUsers, getUsersByRole } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User } from '@/types/models';
@@ -11,10 +10,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
 const AdminDashboard = () => {
-  const [selectedWeek, setSelectedWeek] = useState<number>(
-    mockWeeks.find(week => week.isActive)?.id || 1
-  );
-  
   // Get users by role
   const admins = getUsersByRole('admin');
   const nurses = getUsersByRole('nurse');
@@ -24,10 +19,6 @@ const AdminDashboard = () => {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <WeekSelector 
-          selectedWeek={selectedWeek} 
-          onSelectWeek={setSelectedWeek} 
-        />
       </div>
 
       <Tabs defaultValue="leaders">
@@ -99,13 +90,6 @@ const UserList = ({ users }: { users: User[] }) => {
           <div>
             <p className="font-medium">{user.name}</p>
             <p className="text-sm text-muted-foreground">{user.email}</p>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {user.weeks?.map(week => (
-                <Badge key={week} variant="outline" className="text-xs">
-                  Uke {week}
-                </Badge>
-              ))}
-            </div>
           </div>
         </div>
       ))}
