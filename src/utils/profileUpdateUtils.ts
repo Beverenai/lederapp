@@ -106,16 +106,15 @@ async function updateProfileInDatabase(userId: string, profileData: any) {
     last_name: profileData.last_name,
     notes: profileData.notes,
     team: profileData.team,
-    // If we're inserting a new profile, we need to include the id
-    ...(existingProfile ? {} : { id: userId })
   };
   
   // Determine whether to insert or update
   if (!existingProfile) {
     console.log('Creating new profile for user', userId);
+    // For insert, we need to explicitly include the id
     const { error: insertError } = await supabase
       .from('profiles')
-      .insert(profileUpdateData);
+      .insert({ ...profileUpdateData, id: userId });
     
     if (insertError) {
       console.error('Profile insert error:', insertError);
