@@ -36,7 +36,8 @@ export const useLoginForm = () => {
           description: 'Du er nå logget inn som administrator',
         });
         
-        navigate('/dashboard');
+        // Force reload to trigger the auth state change
+        window.location.href = '/dashboard';
         return;
       }
       
@@ -46,7 +47,8 @@ export const useLoginForm = () => {
         title: 'Innlogget',
         description: 'Du er nå logget inn',
       });
-      navigate('/dashboard');
+      // Use window.location.href instead of navigate to force a reload
+      window.location.href = '/dashboard';
     } catch (err: any) {
       toast({
         title: 'Feil ved innlogging',

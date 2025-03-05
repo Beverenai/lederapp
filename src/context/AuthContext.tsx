@@ -40,10 +40,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check for existing user session on mount
   useEffect(() => {
     const checkAuth = async () => {
+      setIsLoading(true);
       try {
         // Check for admin user in localStorage first
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
+          console.log('Found admin user in localStorage:', adminUser);
           setUser(JSON.parse(adminUser));
           setIsLoading(false);
           return;
@@ -71,11 +73,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Set up listener for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log('Auth state changed:', event, newSession?.user.id);
+        console.log('Auth state changed:', event, newSession?.user?.id);
         
         // If admin user exists in localStorage, prioritize that
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
+          console.log('Admin user found in localStorage during auth change');
           setUser(JSON.parse(adminUser));
           setSession(null);
           setIsLoading(false);
@@ -108,11 +111,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Update logout to also clear admin user
   const handleLogout = async () => {
+    setIsLoading(true);
     // Clear admin user if it exists
     localStorage.removeItem('oksnoen-admin-user');
     
     // Regular Supabase logout
     await logout();
+    
+    // Force clear user state
+    setUser(null);
+    setSession(null);
+    setIsLoading(false);
+    
+    // Redirect to login page
+    window.location.href = '/';
   };
 
   // Determine if user is authenticated

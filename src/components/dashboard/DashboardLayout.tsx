@@ -1,13 +1,27 @@
 
-import React from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Outlet, Navigate, useNavigate } from 'react-router-dom';
 import Sidebar from '@/components/layout/Sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 
 const DashboardLayout: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // If not authenticated and finished loading, redirect to login
+    if (!isLoading && !isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+    
+    // If authenticated and user needs profile completion, redirect them
+    if (!isLoading && isAuthenticated && user && user.id !== '1') {
+      // Log authentication state for debugging
+      console.log('Auth state in DashboardLayout:', { isAuthenticated, user });
+    }
+  }, [isAuthenticated, isLoading, user, navigate]);
 
   if (isLoading) {
     return (
@@ -19,7 +33,7 @@ const DashboardLayout: React.FC = () => {
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return (
