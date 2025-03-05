@@ -64,6 +64,7 @@ const LoginFormContent: React.FC = () => {
     } catch (error: any) {
       console.error('Login form submission error:', error);
       setLoginError(error.message || 'Kunne ikke logge inn. Vennligst prøv igjen.');
+      toast.error('Innlogging feilet. Vennligst prøv igjen.');
     }
   };
 

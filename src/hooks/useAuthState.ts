@@ -42,7 +42,8 @@ export const useAuthState = () => {
           setUser(userProfile);
         } catch (err) {
           console.error('Error refreshing user profile:', err);
-          // Don't clear user here, as that would log the user out
+          // Create a fallback user from session if profile fetch fails
+          createFallbackUserFromSession(session);
         } finally {
           setIsLoading(false);
         }
@@ -54,6 +55,25 @@ export const useAuthState = () => {
       console.error('Refresh user error:', err);
       setIsLoading(false);
     }
+  };
+
+  // Helper function to create a basic user from session data
+  const createFallbackUserFromSession = (userSession: Session) => {
+    console.log('Creating fallback user from session:', userSession.user);
+    const userData = userSession.user;
+    
+    // Extract role from user metadata if available
+    const role = userData.user_metadata?.role || 'leader';
+    
+    const fallbackUser: User = {
+      id: userData.id,
+      name: userData.user_metadata?.firstName || userData.email?.split('@')[0] || 'Bruker',
+      email: userData.email || '',
+      role: role
+    };
+    
+    console.log('Created fallback user:', fallbackUser);
+    setUser(fallbackUser);
   };
 
   // Check for existing user session on mount
@@ -105,15 +125,7 @@ export const useAuthState = () => {
             setUser(userProfile);
           } catch (profileErr) {
             console.error('Error loading user profile:', profileErr);
-            // Create minimal user from session to allow login
-            const basicUser: User = {
-              id: data.session.user.id,
-              name: data.session.user.email?.split('@')[0] || 'Bruker',
-              email: data.session.user.email || '',
-              role: 'leader'
-            };
-            setUser(basicUser);
-            setError('Could not load full profile');
+            createFallbackUserFromSession(data.session);
           }
         } else {
           console.log('No active session found');
@@ -169,14 +181,7 @@ export const useAuthState = () => {
               setUser(userProfile);
             } catch (err) {
               console.error('Error getting user profile on auth change:', err);
-              // Create minimal user from session to prevent login failures
-              const basicUser: User = {
-                id: newSession.user.id,
-                name: newSession.user.email?.split('@')[0] || 'Bruker',
-                email: newSession.user.email || '',
-                role: 'leader'
-              };
-              setUser(basicUser);
+              createFallbackUserFromSession(newSession);
             } finally {
               setIsLoading(false);
             }
@@ -200,7 +205,6 @@ export const useAuthState = () => {
 
   return {
     user,
-    setUser,
     session,
     setSession,
     isLoading,

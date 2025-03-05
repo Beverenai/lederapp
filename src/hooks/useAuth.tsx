@@ -12,13 +12,18 @@ export const useAuth = () => {
       user: null,
       isLoading: true,
       error: 'Auth context not available',
-      login: async () => {
+      login: async (email: string, password: string) => {
+        console.error('Auth provider not available');
         throw new Error('Auth provider not available');
       },
-      logout: () => {},
+      logout: () => {
+        console.error('Auth provider not available');
+      },
       isAuthenticated: false,
       session: null,
-      refreshUser: async () => {},
+      refreshUser: async () => {
+        console.error('Auth provider not available');
+      },
       authInitialized: false
     };
   }
