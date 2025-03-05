@@ -16,6 +16,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const { isLoading, setIsLoading, error, setError, login, logout } = useSupabaseAuth();
 
+  // Function to refresh user data
+  const refreshUser = async () => {
+    if (session) {
+      const userProfile = await fetchUserProfile(session);
+      setUser(userProfile);
+    }
+  };
+
   // Check for existing user session on mount
   useEffect(() => {
     const checkAuth = async () => {
@@ -96,7 +104,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout: handleLogout,
     isAuthenticated,
-    session
+    session,
+    refreshUser
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

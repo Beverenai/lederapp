@@ -13,6 +13,8 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types/models';
 
+type AbilityOption = 'Ja' | 'Nei' | 'Nesten';
+
 const ProfileCompletionForm = () => {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
@@ -27,9 +29,9 @@ const ProfileCompletionForm = () => {
   const [hasDriverLicense, setHasDriverLicense] = useState(user?.hasDriverLicense || false);
   const [hasCar, setHasCar] = useState(user?.hasCar || false);
   const [hasBoatLicense, setHasBoatLicense] = useState(user?.hasBoatLicense || false);
-  const [rappellingAbility, setRappellingAbility] = useState(user?.rappellingAbility || 'Nei');
-  const [ziplineAbility, setZiplineAbility] = useState(user?.ziplineAbility || 'Nei');
-  const [climbingAbility, setClimbingAbility] = useState(user?.climbingAbility || 'Nei');
+  const [rappellingAbility, setRappellingAbility] = useState<AbilityOption>(user?.rappellingAbility || 'Nei');
+  const [ziplineAbility, setZiplineAbility] = useState<AbilityOption>(user?.ziplineAbility || 'Nei');
+  const [climbingAbility, setClimbingAbility] = useState<AbilityOption>(user?.climbingAbility || 'Nei');
   
   // Avatar upload handling
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,6 +133,16 @@ const ProfileCompletionForm = () => {
     }
   };
   
+  // Function to safely handle ability changes
+  const handleAbilityChange = (setter: React.Dispatch<React.SetStateAction<AbilityOption>>) => {
+    return (value: string) => {
+      // Ensure the value is a valid AbilityOption
+      if (value === 'Ja' || value === 'Nei' || value === 'Nesten') {
+        setter(value);
+      }
+    };
+  };
+  
   return (
     <div className="container mx-auto max-w-lg py-8 px-4">
       <Card>
@@ -219,7 +231,7 @@ const ProfileCompletionForm = () => {
                   <Label htmlFor="rappellingAbility">Rappellering</Label>
                   <Select 
                     value={rappellingAbility} 
-                    onValueChange={setRappellingAbility}
+                    onValueChange={handleAbilityChange(setRappellingAbility)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Velg nivå" />
@@ -236,7 +248,7 @@ const ProfileCompletionForm = () => {
                   <Label htmlFor="ziplineAbility">Tbane-oppsett</Label>
                   <Select 
                     value={ziplineAbility} 
-                    onValueChange={setZiplineAbility}
+                    onValueChange={handleAbilityChange(setZiplineAbility)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Velg nivå" />
@@ -253,7 +265,7 @@ const ProfileCompletionForm = () => {
                   <Label htmlFor="climbingAbility">Klatring</Label>
                   <Select 
                     value={climbingAbility} 
-                    onValueChange={setClimbingAbility}
+                    onValueChange={handleAbilityChange(setClimbingAbility)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Velg nivå" />
