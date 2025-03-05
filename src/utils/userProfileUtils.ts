@@ -8,7 +8,7 @@ import { User, UserRole } from '@/types/models';
  */
 export const fetchUserProfile = async (userSession: Session): Promise<User | null> => {
   try {
-    // Get the profile data
+    // Get the profile data directly (don't try to access auth.users table)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -16,15 +16,20 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
       .maybeSingle();
 
     if (profileError) {
+      console.error('Error fetching profile:', profileError);
       throw profileError;
     }
+
+    // Get metadata from the session's user object instead
+    const authUser = userSession.user;
+    const metadata = authUser.user_metadata || {};
 
     if (profile) {
       // Convert Supabase profile to our User type
       const userData: User = {
         id: profile.id,
         name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
-        email: profile.email || userSession.user.email || '',
+        email: profile.email || authUser.email || '',
         role: (profile.role as UserRole) || 'leader',
         image: profile.avatar_url,
         age: profile.age,
@@ -43,9 +48,8 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
 
       return userData;
     } else {
-      // If no profile found, try to create one from auth metadata
-      const authUser = userSession.user;
-      const metadata = authUser.user_metadata || {};
+      // If no profile found, create one from auth metadata
+      console.log('No profile found, creating one from auth metadata');
       
       const newProfile = {
         id: authUser.id,

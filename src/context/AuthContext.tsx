@@ -19,8 +19,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Function to refresh user data
   const refreshUser = async () => {
     if (session) {
-      const userProfile = await fetchUserProfile(session);
-      setUser(userProfile);
+      try {
+        const userProfile = await fetchUserProfile(session);
+        setUser(userProfile);
+        console.log('User profile refreshed:', userProfile);
+      } catch (err) {
+        console.error('Error refreshing user profile:', err);
+      }
     }
   };
 
@@ -40,8 +45,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data } = await supabase.auth.getSession();
         
         if (data.session) {
+          console.log('Found existing session:', data.session.user.id);
           setSession(data.session);
           const userProfile = await fetchUserProfile(data.session);
+          console.log('User profile:', userProfile);
           setUser(userProfile);
         }
       } catch (err) {
@@ -56,6 +63,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Set up listener for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log('Auth state changed:', event, newSession?.user.id);
+        
         // If admin user exists in localStorage, prioritize that
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
@@ -68,8 +77,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(newSession);
         
         if (newSession) {
-          const userProfile = await fetchUserProfile(newSession);
-          setUser(userProfile);
+          try {
+            const userProfile = await fetchUserProfile(newSession);
+            console.log('User profile from auth change:', userProfile);
+            setUser(userProfile);
+          } catch (err) {
+            console.error('Error getting user profile:', err);
+          }
         } else {
           setUser(null);
         }

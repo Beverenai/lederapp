@@ -12,6 +12,7 @@ import DashboardLayout from "./components/dashboard/DashboardLayout";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
 import LeaderDashboard from "./components/dashboard/LeaderDashboard";
 import NurseDashboard from "./components/dashboard/NurseDashboard";
+import { needsProfileCompletion } from "./utils/userProfileUtils";
 
 const queryClient = new QueryClient();
 
@@ -65,17 +66,9 @@ const ProfileCompletionCheck = ({ children }: { children: JSX.Element }) => {
     return <div>Laster...</div>;
   }
   
-  // Check if essential profile data is missing
-  const needsProfileCompletion = 
-    user && 
-    (!user.phone || 
-     user.hasDriverLicense === undefined || 
-     user.hasBoatLicense === undefined ||
-     user.rappellingAbility === undefined ||
-     user.ziplineAbility === undefined ||
-     user.climbingAbility === undefined);
-  
-  if (needsProfileCompletion) {
+  // Check if essential profile data is missing using our utility function
+  if (user && needsProfileCompletion(user)) {
+    console.log('User needs to complete profile, redirecting to profile completion page');
     return <Navigate to="/profile-completion" replace />;
   }
   
