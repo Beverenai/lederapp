@@ -18,13 +18,17 @@ export const useAuthState = () => {
   // Function to refresh user data
   const refreshUser = async () => {
     try {
+      setIsLoading(true);
+      console.log('Refreshing user data...');
+      
       // Check for admin user in localStorage first
       const adminUser = localStorage.getItem('oksnoen-admin-user');
       if (adminUser) {
         try {
           const parsedUser = JSON.parse(adminUser);
-          setUser(parsedUser);
           console.log('Using admin user from localStorage:', parsedUser);
+          setUser(parsedUser);
+          setIsLoading(false);
           return;
         } catch (err) {
           console.error('Error parsing admin user:', err);
@@ -33,26 +37,40 @@ export const useAuthState = () => {
         }
       }
       
-      if (session) {
-        try {
-          setIsLoading(true);
-          console.log('Refreshing user profile with session:', session.user.id);
-          const userProfile = await fetchUserProfile(session);
-          console.log('Refreshed user profile:', userProfile);
-          setUser(userProfile);
-        } catch (err) {
-          console.error('Error refreshing user profile:', err);
-          // Create a fallback user from session if profile fetch fails
-          createFallbackUserFromSession(session);
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setUser(null);
+      // Get the current session directly
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Error refreshing session:', sessionError);
+        setError(sessionError.message);
         setIsLoading(false);
+        return;
+      }
+      
+      if (!sessionData?.session) {
+        console.log('No active session found during refresh');
+        setUser(null);
+        setSession(null);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Update session
+      setSession(sessionData.session);
+      
+      try {
+        console.log('Fetching user profile with ID:', sessionData.session.user.id);
+        const userProfile = await fetchUserProfile(sessionData.session);
+        console.log('Refreshed user profile:', userProfile);
+        setUser(userProfile);
+      } catch (err) {
+        console.error('Error fetching user profile:', err);
+        // Create a fallback user from session
+        createFallbackUserFromSession(sessionData.session);
       }
     } catch (err) {
       console.error('Refresh user error:', err);
+    } finally {
       setIsLoading(false);
     }
   };

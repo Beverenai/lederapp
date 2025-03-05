@@ -25,23 +25,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Update logout to also clear admin user
   const handleLogout = async () => {
     setIsLoading(true);
+    console.log('Logging out user:', user?.id || 'unknown');
+    
     // Clear admin user if it exists
     localStorage.removeItem('oksnoen-admin-user');
     
     // Regular Supabase logout
     await supabaseLogout();
     
-    // Force clear user state
-    // We're not using setUser here since it's not exposed from useAuthState
-    // That's OK because the auth listener will set user to null
+    // Force clear user state and redirect
     setIsLoading(false);
     
-    // Redirect to login page
+    // Redirect to login page with page reload to clear all state
+    console.log('Logout complete, redirecting to login');
     window.location.href = '/';
   };
 
   // Determine if user is authenticated
   const isAuthenticated = !!user;
+
+  console.log('Auth provider state:', { 
+    isAuthenticated, 
+    userId: user?.id || 'none',
+    authInitialized,
+    isLoading
+  });
 
   // Create the context value
   const value: AuthContextType = {

@@ -48,13 +48,18 @@ export const useLoginForm = () => {
       console.log('Standard login with:', email);
       await login(email, password);
       
-      console.log('Login successful, waiting for auth state to update');
+      console.log('Login successful, navigating to dashboard');
       toast.success('Innlogging vellykket!');
       
-      // Force reload to ensure all state is reset properly
-      console.log('Redirecting to dashboard with full page reload');
+      // Manual navigation after successful login
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        console.log('Executing delayed redirect to dashboard');
+        if (document.location.pathname === '/') {
+          console.log('Forcing full page reload to ensure clean state');
+          window.location.href = '/dashboard';
+        } else {
+          navigate('/dashboard');
+        }
       }, 500);
       
     } catch (err: any) {
