@@ -25,7 +25,7 @@ export const useLoginForm = () => {
     try {
       console.log('Attempting login with:', email);
       
-      // Special case: admin login
+      // Special case: admin login - handle without requiring email format
       if (email.toLowerCase() === 'admin' && password === 'admin') {
         console.log('Admin login detected');
         const adminUser = {
@@ -56,7 +56,6 @@ export const useLoginForm = () => {
     } catch (err: any) {
       console.error('Login error:', err);
       toast.error(err.message || 'Innlogging feilet. Sjekk brukernavn og passord.');
-      throw err;
     } finally {
       setIsSubmitting(false);
     }

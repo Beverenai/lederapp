@@ -31,7 +31,7 @@ const LoginFormContent: React.FC = () => {
     
     // Validate email
     if (!email) {
-      setEmailError('E-post er påkrevd');
+      setEmailError('Brukernavn eller e-post er påkrevd');
       valid = false;
     }
     
@@ -69,17 +69,17 @@ const LoginFormContent: React.FC = () => {
   return (
     <form onSubmit={onSubmit} className="space-y-4 mt-4">
       <div className="space-y-2">
-        <Label htmlFor="email">E-post</Label>
+        <Label htmlFor="email">Brukernavn eller E-post</Label>
         <Input
           id="email"
-          type="email"
-          placeholder="Din e-postadresse"
+          type="text" 
+          placeholder="Brukernavn eller e-post"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           className={`w-full ${emailError ? 'border-red-500' : ''}`}
           disabled={isSubmitting}
-          autoComplete="email"
+          autoComplete="username email"
         />
         {emailError && <p className="text-red-500 text-xs">{emailError}</p>}
       </div>
@@ -118,7 +118,7 @@ const LoginFormContent: React.FC = () => {
         <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
         <span>
           Du kan også logge inn med testkonto:<br />
-          E-post: <strong>admin</strong>, Passord: <strong>admin</strong>
+          Brukernavn: <strong>admin</strong>, Passord: <strong>admin</strong>
         </span>
       </div>
       

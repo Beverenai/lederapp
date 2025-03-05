@@ -17,10 +17,10 @@ export const useSupabaseAuth = () => {
     try {
       // Validate inputs
       if (!email || !password) {
-        throw new Error('E-post og passord er påkrevd');
+        throw new Error('Brukernavn/E-post og passord er påkrevd');
       }
       
-      console.log('Attempting login with email:', email);
+      console.log('Attempting login with:', email);
       
       // Special case: admin quick login
       if (email.toLowerCase() === 'admin' && password === 'admin') {
@@ -37,6 +37,7 @@ export const useSupabaseAuth = () => {
         return;
       }
       
+      // For regular users, attempt email login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -47,9 +48,11 @@ export const useSupabaseAuth = () => {
         
         // Provide user-friendly error message in Norwegian
         if (error.message.includes('Invalid login credentials')) {
-          throw new Error('Feil e-post eller passord');
+          throw new Error('Feil brukernavn/e-post eller passord');
         } else if (error.message.includes('Email not confirmed')) {
           throw new Error('E-posten er ikke bekreftet. Sjekk innboksen din for en bekreftelseslenke.');
+        } else if (error.message.includes('Invalid email')) {
+          throw new Error('Ugyldig e-post format');
         } else {
           throw new Error(error.message);
         }
