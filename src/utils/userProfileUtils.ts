@@ -1,0 +1,79 @@
+
+import { supabase } from '@/integrations/supabase/client';
+import { Session } from '@supabase/supabase-js';
+import { User, UserRole } from '@/types/models';
+
+/**
+ * Fetches user profile from Supabase and converts it to our User model
+ */
+export const fetchUserProfile = async (userSession: Session): Promise<User | null> => {
+  try {
+    // Get the profile data
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userSession.user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      throw profileError;
+    }
+
+    if (profile) {
+      // Convert Supabase profile to our User type
+      const userData: User = {
+        id: profile.id,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+        email: profile.email || userSession.user.email || '',
+        role: (profile.role as UserRole) || 'leader',
+        image: profile.avatar_url,
+        age: profile.age,
+        skills: [], // Optional
+        notes: profile.notes,
+        activities: [], // Optional
+        team: profile.team,
+        phone: profile.phone,
+        hasDriverLicense: profile.has_driving_license,
+        hasCar: profile.has_car,
+        hasBoatLicense: profile.has_boat_license,
+        rappellingAbility: profile.rappelling_ability as any,
+        ziplineAbility: profile.zipline_ability as any,
+        climbingAbility: profile.climbing_ability as any,
+      };
+
+      return userData;
+    } else {
+      // If no profile found, try to create one from auth metadata
+      const authUser = userSession.user;
+      const metadata = authUser.user_metadata || {};
+      
+      const newProfile = {
+        id: authUser.id,
+        first_name: metadata.firstName || '',
+        last_name: metadata.lastName || '',
+        email: authUser.email,
+        role: 'leader' as UserRole,
+      };
+      
+      // Insert the new profile
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert(newProfile);
+        
+      if (insertError) {
+        console.error('Error creating profile:', insertError);
+      }
+      
+      // Set user with basic data
+      return {
+        id: authUser.id,
+        name: `${metadata.firstName || ''} ${metadata.lastName || ''}`.trim(),
+        email: authUser.email || '',
+        role: 'leader',
+      };
+    }
+  } catch (err) {
+    console.error('Error fetching user profile:', err);
+    return null;
+  }
+};
