@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLoginForm } from '@/hooks/useLoginForm';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const LoginFormContent: React.FC = () => {
@@ -29,7 +29,7 @@ const LoginFormContent: React.FC = () => {
     setPasswordError('');
     setLoginError('');
     
-    // Validate email
+    // Validate email/username
     if (!email) {
       setEmailError('Brukernavn eller e-post er påkrevd');
       valid = false;
@@ -59,6 +59,7 @@ const LoginFormContent: React.FC = () => {
     try {
       setLoginError('');
       console.log('Form validation passed, attempting login');
+      toast.info('Logger inn, vennligst vent...');
       await handleLogin(e);
     } catch (error: any) {
       console.error('Login form submission error:', error);
@@ -127,7 +128,12 @@ const LoginFormContent: React.FC = () => {
         className="w-full bg-oksnoen-red hover:bg-oksnoen-red/90 text-white"
         disabled={isSubmitting}
       >
-        {isSubmitting ? 'Logger inn...' : 'Logg inn'}
+        {isSubmitting ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Logger inn...
+          </span>
+        ) : 'Logg inn'}
       </Button>
     </form>
   );

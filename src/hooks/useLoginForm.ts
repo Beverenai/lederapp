@@ -39,25 +39,27 @@ export const useLoginForm = () => {
         toast.success('Innlogget som admin');
         
         // Force reload to trigger auth state update
+        console.log('Redirecting to admin dashboard with full page reload');
         window.location.href = '/dashboard/admin';
         return;
       }
       
       // Standard email login
+      console.log('Standard login with:', email);
       await login(email, password);
       
       console.log('Login successful, waiting for auth state to update');
       toast.success('Innlogging vellykket!');
       
-      // Always redirect to dashboard regardless of RLS errors
+      // Force reload to ensure all state is reset properly
+      console.log('Redirecting to dashboard with full page reload');
       setTimeout(() => {
-        navigate('/dashboard');
+        window.location.href = '/dashboard';
       }, 500);
       
     } catch (err: any) {
       console.error('Login error:', err);
       toast.error(err.message || 'Innlogging feilet. Sjekk brukernavn og passord.');
-    } finally {
       setIsSubmitting(false);
     }
   };

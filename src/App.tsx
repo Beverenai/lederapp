@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,17 +8,18 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProfileCompletion from "./pages/ProfileCompletion"; 
 import ProfilePage from "./pages/ProfilePage";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
 import LeaderDashboard from "./components/dashboard/LeaderDashboard";
 import NurseDashboard from "./components/dashboard/NurseDashboard";
 import { needsProfileCompletion } from "./utils/userProfileUtils";
+import { useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient();
 
-// Role-based route protection component
-const ProtectedRoute = ({ 
+// Role-based route protection component - moved inside App so it has AuthProvider context
+const ProtectedRouteWrapper = ({ 
   element, 
   allowedRoles 
 }: { 
@@ -45,8 +47,8 @@ const ProtectedRoute = ({
   return element;
 };
 
-// Component to select the appropriate dashboard based on user role
-const DashboardSelector = () => {
+// Component to select the appropriate dashboard based on user role - moved inside App
+const DashboardSelectorWrapper = () => {
   const { user } = useAuth();
   
   if (user?.role === 'admin') {
@@ -58,8 +60,8 @@ const DashboardSelector = () => {
   }
 };
 
-// Component to check if profile needs completion
-const ProfileCompletionCheck = ({ children }: { children: JSX.Element }) => {
+// Component to check if profile needs completion - moved inside App
+const ProfileCompletionCheckWrapper = ({ children }: { children: JSX.Element }) => {
   const { user, isLoading } = useAuth();
   
   if (isLoading) {
@@ -75,87 +77,90 @@ const ProfileCompletionCheck = ({ children }: { children: JSX.Element }) => {
   return children;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Index page is now the login page */}
-            <Route path="/" element={<Index />} />
-            
-            {/* Redirect /login to root since that's now the login page */}
-            <Route path="/login" element={<Navigate to="/" replace />} />
-            
-            <Route 
-              path="/profile-completion" 
-              element={
-                <ProtectedRoute 
-                  element={<ProfileCompletion />} 
-                  allowedRoles={['admin', 'nurse', 'leader']} 
-                />
-              } 
-            />
-            
-            <Route 
-              path="/profile" 
-              element={
-                <ProfileCompletionCheck>
-                  <ProtectedRoute 
-                    element={<ProfilePage />} 
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthProvider>
+            {/* All routes are now inside the AuthProvider */}
+            <Routes>
+              {/* Index page is now the login page */}
+              <Route path="/" element={<Index />} />
+              
+              {/* Redirect /login to root since that's now the login page */}
+              <Route path="/login" element={<Navigate to="/" replace />} />
+              
+              <Route 
+                path="/profile-completion" 
+                element={
+                  <ProtectedRouteWrapper 
+                    element={<ProfileCompletion />} 
                     allowedRoles={['admin', 'nurse', 'leader']} 
                   />
-                </ProfileCompletionCheck>
-              } 
-            />
-            
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProfileCompletionCheck>
-                  <DashboardLayout />
-                </ProfileCompletionCheck>
-              }
-            >
-              <Route index element={<DashboardSelector />} />
-              <Route 
-                path="admin" 
-                element={
-                  <ProtectedRoute 
-                    element={<AdminDashboard />} 
-                    allowedRoles={['admin']} 
-                  />
                 } 
               />
+              
               <Route 
-                path="nurse" 
+                path="/profile" 
                 element={
-                  <ProtectedRoute 
-                    element={<NurseDashboard />} 
-                    allowedRoles={['nurse']} 
-                  />
+                  <ProfileCompletionCheckWrapper>
+                    <ProtectedRouteWrapper 
+                      element={<ProfilePage />} 
+                      allowedRoles={['admin', 'nurse', 'leader']} 
+                    />
+                  </ProfileCompletionCheckWrapper>
                 } 
               />
+              
               <Route 
-                path="leader" 
+                path="/dashboard" 
                 element={
-                  <ProtectedRoute 
-                    element={<LeaderDashboard />} 
-                    allowedRoles={['leader']} 
-                  />
-                } 
-              />
-            </Route>
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+                  <ProfileCompletionCheckWrapper>
+                    <DashboardLayout />
+                  </ProfileCompletionCheckWrapper>
+                }
+              >
+                <Route index element={<DashboardSelectorWrapper />} />
+                <Route 
+                  path="admin" 
+                  element={
+                    <ProtectedRouteWrapper 
+                      element={<AdminDashboard />} 
+                      allowedRoles={['admin']} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="nurse" 
+                  element={
+                    <ProtectedRouteWrapper 
+                      element={<NurseDashboard />} 
+                      allowedRoles={['nurse']} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="leader" 
+                  element={
+                    <ProtectedRouteWrapper 
+                      element={<LeaderDashboard />} 
+                      allowedRoles={['leader']} 
+                    />
+                  } 
+                />
+              </Route>
+              
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </TooltipProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
