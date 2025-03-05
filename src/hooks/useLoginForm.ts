@@ -17,7 +17,7 @@ export const useLoginForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Sjekk for admin-pålogging
+      // Special case: admin login
       if (email.toLowerCase() === 'admin' && password === 'admin') {
         const adminUser = {
           id: '1',
@@ -32,13 +32,16 @@ export const useLoginForm = () => {
         return;
       }
       
-      // Vanlig Supabase-pålogging
+      // Standard email login
+      console.log('Attempting login with:', email);
       await login(email, password);
       toast.success('Innlogging vellykket!');
-      navigate('/dashboard');
+      
+      // Let the auth state change listener handle the navigation
+      // This prevents race conditions between manual navigation and auth state changes
     } catch (err: any) {
       console.error('Login error:', err);
-      toast.error('Innlogging feilet. Sjekk brukernavn og passord.');
+      toast.error(err.message || 'Innlogging feilet. Sjekk brukernavn og passord.');
     } finally {
       setIsSubmitting(false);
     }

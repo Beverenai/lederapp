@@ -20,16 +20,24 @@ export const useAuthState = () => {
     // Check for admin user in localStorage first
     const adminUser = localStorage.getItem('oksnoen-admin-user');
     if (adminUser) {
-      setUser(JSON.parse(adminUser));
-      return;
+      try {
+        setUser(JSON.parse(adminUser));
+        return;
+      } catch (err) {
+        console.error('Error parsing admin user:', err);
+        // Continue with normal auth flow if admin user parse fails
+      }
     }
     
     if (session) {
       try {
+        setIsLoading(true);
         const userProfile = await fetchUserProfile(session);
         setUser(userProfile);
       } catch (err) {
         console.error('Error refreshing user profile:', err);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -39,31 +47,43 @@ export const useAuthState = () => {
     const checkAuth = async () => {
       try {
         setIsLoading(true);
+        console.log('Checking authentication status...');
         
         // Check for admin user in localStorage first
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
-          setUser(JSON.parse(adminUser));
-          setIsLoading(false);
-          setAuthInitialized(true);
-          return;
+          try {
+            setUser(JSON.parse(adminUser));
+            console.log('Found admin user in localStorage');
+            setIsLoading(false);
+            setAuthInitialized(true);
+            return;
+          } catch (err) {
+            console.error('Error parsing admin user:', err);
+            localStorage.removeItem('oksnoen-admin-user');
+            // Continue with normal auth flow
+          }
         }
         
         // Get the current session from Supabase
         const { data, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
+          console.error('Session error:', sessionError.message);
           setError(sessionError.message);
           setIsLoading(false);
           setAuthInitialized(true);
           return;
         }
         
+        console.log('Session check result:', data?.session ? 'Active session' : 'No session');
+        
         if (data.session) {
           setSession(data.session);
           try {
             const userProfile = await fetchUserProfile(data.session);
             setUser(userProfile);
+            console.log('User profile loaded:', userProfile?.email);
           } catch (profileErr) {
             console.error('Error loading user profile:', profileErr);
             setError('Failed to load user profile');
@@ -76,6 +96,7 @@ export const useAuthState = () => {
         // Always mark auth as initialized and loading as complete
         setIsLoading(false);
         setAuthInitialized(true);
+        console.log('Auth initialized');
       }
     };
 
@@ -85,13 +106,21 @@ export const useAuthState = () => {
     // Set up listener for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log('Auth state changed:', event);
+        
         // If admin user exists in localStorage, prioritize that
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
-          setUser(JSON.parse(adminUser));
-          setSession(null);
-          setIsLoading(false);
-          return;
+          try {
+            setUser(JSON.parse(adminUser));
+            setSession(null);
+            setIsLoading(false);
+            return;
+          } catch (err) {
+            console.error('Error parsing admin user:', err);
+            localStorage.removeItem('oksnoen-admin-user');
+            // Continue with normal auth flow
+          }
         }
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -102,6 +131,7 @@ export const useAuthState = () => {
               setIsLoading(true);
               const userProfile = await fetchUserProfile(newSession);
               setUser(userProfile);
+              console.log('User profile updated after auth change:', userProfile?.email);
             } catch (err) {
               console.error('Error getting user profile:', err);
               setUser(null);
@@ -110,6 +140,7 @@ export const useAuthState = () => {
             }
           }
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           setUser(null);
           setSession(null);
         }
