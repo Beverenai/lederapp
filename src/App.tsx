@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
 import ProfileCompletion from "./pages/ProfileCompletion"; 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
@@ -33,7 +32,7 @@ const ProtectedRoute = ({
   
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
   
   // If authenticated but doesn't have the required role, redirect to default dashboard
@@ -91,8 +90,12 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Index page is now the login page */}
             <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
+            
+            {/* Redirect /login to root since that's now the login page */}
+            <Route path="/login" element={<Navigate to="/" replace />} />
+            
             <Route 
               path="/profile-completion" 
               element={
