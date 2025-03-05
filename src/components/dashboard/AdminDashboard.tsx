@@ -30,34 +30,6 @@ const AdminDashboard = () => {
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Ukeoversikt</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {mockWeeks.map(week => (
-              <div 
-                key={week.id}
-                className={`p-4 rounded-lg border ${
-                  week.isActive 
-                    ? 'border-green-500 bg-green-50 dark:bg-green-950/20' 
-                    : 'border-gray-200 bg-gray-50 dark:bg-gray-800/10 dark:border-gray-700'
-                }`}
-              >
-                <h3 className="font-medium">{week.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {week.startDate.toLocaleDateString()} - {week.endDate.toLocaleDateString()}
-                </p>
-                {week.isActive && (
-                  <Badge className="mt-2 bg-green-500">Aktiv</Badge>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       <Tabs defaultValue="leaders">
         <TabsList>
           <TabsTrigger value="leaders">Ledere</TabsTrigger>
