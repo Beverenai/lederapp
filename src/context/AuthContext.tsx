@@ -15,7 +15,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
-  const [authStateChangeCount, setAuthStateChangeCount] = useState(0);
   const { isLoading, setIsLoading, error, setError, login, logout } = useSupabaseAuth();
 
   // Function to refresh user data
@@ -24,7 +23,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const adminUser = localStorage.getItem('oksnoen-admin-user');
     if (adminUser) {
       setUser(JSON.parse(adminUser));
-      console.log('Admin user refreshed from localStorage');
       return;
     }
     
@@ -32,7 +30,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const userProfile = await fetchUserProfile(session);
         setUser(userProfile);
-        console.log('User profile refreshed:', userProfile);
       } catch (err) {
         console.error('Error refreshing user profile:', err);
       }
@@ -44,12 +41,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const checkAuth = async () => {
       try {
         setIsLoading(true);
-        console.log('Checking authentication status...');
         
         // Check for admin user in localStorage first
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
-          console.log('Found admin user in localStorage:', adminUser);
           setUser(JSON.parse(adminUser));
           setIsLoading(false);
           setAuthInitialized(true);
@@ -60,7 +55,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Session error:', sessionError);
           setError(sessionError.message);
           setIsLoading(false);
           setAuthInitialized(true);
@@ -68,18 +62,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         
         if (data.session) {
-          console.log('Found existing session:', data.session.user.id);
           setSession(data.session);
           try {
             const userProfile = await fetchUserProfile(data.session);
-            console.log('User profile loaded:', userProfile);
             setUser(userProfile);
           } catch (profileErr) {
             console.error('Error loading user profile:', profileErr);
             setError('Failed to load user profile');
           }
-        } else {
-          console.log('No active session found');
         }
       } catch (err) {
         console.error('Auth check error:', err);
@@ -88,7 +78,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Always mark auth as initialized and loading as complete
         setIsLoading(false);
         setAuthInitialized(true);
-        console.log('Auth check complete, initialized:', true);
       }
     };
 
@@ -98,24 +87,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Set up listener for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log('Auth state changed:', event, newSession?.user?.id);
-        
-        // Prevent infinite loops by limiting auth state changes
-        setAuthStateChangeCount(prev => {
-          const newCount = prev + 1;
-          // If too many auth state changes happen quickly, we might be in a loop
-          if (newCount > 10 && new Date().getTime() - lastAuthChange < 5000) {
-            console.warn('Too many auth state changes, possible infinite loop');
-            return prev; // Don't increase the counter further
-          }
-          lastAuthChange = new Date().getTime();
-          return newCount;
-        });
-        
         // If admin user exists in localStorage, prioritize that
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
-          console.log('Admin user found in localStorage during auth change');
           setUser(JSON.parse(adminUser));
           setSession(null);
           setIsLoading(false);
@@ -123,14 +97,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          console.log('User signed in or token refreshed');
           setSession(newSession);
           
           if (newSession) {
             try {
               setIsLoading(true);
               const userProfile = await fetchUserProfile(newSession);
-              console.log('User profile from auth change:', userProfile);
               setUser(userProfile);
             } catch (err) {
               console.error('Error getting user profile:', err);
@@ -140,7 +112,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           }
         } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
           setUser(null);
           setSession(null);
         }
@@ -149,9 +120,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsLoading(false);
       }
     );
-
-    // Track the last auth change time to detect loops
-    let lastAuthChange = new Date().getTime();
 
     // Cleanup
     return () => {
