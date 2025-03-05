@@ -62,3 +62,5 @@ export interface PassTemplate {
   includeImage: boolean;
   customMessage?: string;
 }
+
+// We're removing the Week type completely since we don't need it anymore

@@ -1,17 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import TaskList from '@/components/tasks/TaskList';
 import ChildList from '@/components/children/ChildList';
-import WeekSelector from '@/components/shared/WeekSelector';
-import { mockWeeks, mockUsers } from '@/data/mockData';
+import { mockUsers } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const NurseDashboard = () => {
-  const [selectedWeek, setSelectedWeek] = useState<number>(
-    mockWeeks.find(week => week.isActive)?.id || 1
-  );
-  
   // For demo, let's assume we're logged in as nurse
   const currentUser = mockUsers.find(user => user.id === '2');
 
@@ -19,10 +14,6 @@ const NurseDashboard = () => {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Sykepleier Dashboard</h1>
-        <WeekSelector 
-          selectedWeek={selectedWeek} 
-          onSelectWeek={setSelectedWeek} 
-        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -32,7 +23,6 @@ const NurseDashboard = () => {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Du er innlogget for {mockWeeks.find(w => w.id === selectedWeek)?.name}. 
               Som sykepleier har du tilgang til all medisinsk informasjon om barna.
             </p>
           </CardContent>

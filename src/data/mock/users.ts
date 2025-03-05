@@ -10,8 +10,7 @@ export const mockUsers: User[] = [
     role: 'admin',
     image: 'https://i.pravatar.cc/150?img=1',
     age: 35,
-    skills: ['Førstehjelp', 'Svømming', 'Kanopadling'],
-    weeks: [1, 2, 3, 4],
+    skills: ['Førstehjelp', 'Svømming', 'Kanopadling']
   },
   {
     id: '2',
@@ -20,8 +19,7 @@ export const mockUsers: User[] = [
     role: 'nurse',
     image: 'https://i.pravatar.cc/150?img=2',
     age: 42,
-    skills: ['Førstehjelp', 'Medisinering', 'Omsorg'],
-    weeks: [1, 2],
+    skills: ['Førstehjelp', 'Medisinering', 'Omsorg']
   },
   {
     id: '3',
@@ -31,8 +29,7 @@ export const mockUsers: User[] = [
     image: 'https://i.pravatar.cc/150?img=3',
     age: 26,
     skills: ['Ballspill', 'Svømming', 'Friluftsliv'],
-    weeks: [1, 3],
-    assignedCabinId: '1',
+    assignedCabinId: '1'
   },
   {
     id: '4',
@@ -42,8 +39,7 @@ export const mockUsers: User[] = [
     image: 'https://i.pravatar.cc/150?img=4',
     age: 24,
     skills: ['Håndverk', 'Musikk', 'Matlaging'],
-    weeks: [2, 4],
-    assignedCabinId: '2',
+    assignedCabinId: '2'
   },
 ];
 

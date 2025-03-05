@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Define the user role types
@@ -11,7 +10,6 @@ export interface User {
   role: UserRole;
   imageUrl?: string;
   cabin?: string;
-  weeks?: string[];
 }
 
 // Mock users for development
@@ -20,23 +18,20 @@ const MOCK_USERS: User[] = [
     id: '1',
     name: 'Admin User',
     role: 'admin',
-    imageUrl: '/placeholder.svg',
-    weeks: ['1', '2', '3']
+    imageUrl: '/placeholder.svg'
   },
   {
     id: '2',
     name: 'Nurse User',
     role: 'nurse',
-    imageUrl: '/placeholder.svg',
-    weeks: ['1', '3']
+    imageUrl: '/placeholder.svg'
   },
   {
     id: '3',
     name: 'Leader User',
     role: 'leader',
     imageUrl: '/placeholder.svg',
-    cabin: 'Fjellhytta',
-    weeks: ['2']
+    cabin: 'Fjellhytta'
   }
 ];
 
