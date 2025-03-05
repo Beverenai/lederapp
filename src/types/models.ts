@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'nurse' | 'leader';
 
 export interface User {
@@ -11,6 +10,9 @@ export interface User {
   skills?: string[];
   weeks?: number[];
   assignedCabinId?: string;
+  notes?: string; // Notater spesifikt for lederen
+  activities?: string[]; // Aktiviteter lederen kan lede
+  team?: string; // Teamet lederen tilhører
 }
 
 export interface Child {

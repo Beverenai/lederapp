@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import CabinList from '@/components/cabins/CabinList';
 import WeekSelector from '@/components/shared/WeekSelector';
+import LeaderManagement from '@/components/leaders/LeaderManagement';
 import { mockWeeks, mockUsers, getUsersByRole } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,12 +58,17 @@ const AdminDashboard = () => {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="users">
+      <Tabs defaultValue="leaders">
         <TabsList>
+          <TabsTrigger value="leaders">Ledere</TabsTrigger>
           <TabsTrigger value="users">Brukere</TabsTrigger>
           <TabsTrigger value="cabins">Hytter</TabsTrigger>
           <TabsTrigger value="activities">Aktiviteter</TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="leaders">
+          <LeaderManagement />
+        </TabsContent>
         
         <TabsContent value="users">
           <Card>
