@@ -4,6 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 import { User } from '@/types/models';
 import { fetchUserProfile } from '@/utils/userProfileUtils';
+import { 
+  getAdminUserFromStorage, 
+  clearAdminUser 
+} from '@/utils/adminUserUtils';
+import { 
+  createFallbackUserFromSession, 
+  getCurrentSession,
+  getUserFromSession
+} from '@/utils/sessionUtils';
 
 /**
  * Hook that manages authentication state and session handling
@@ -22,19 +31,12 @@ export const useAuthState = () => {
       console.log('Refreshing user data...');
       
       // Check for admin user in localStorage first
-      const adminUser = localStorage.getItem('oksnoen-admin-user');
+      const adminUser = getAdminUserFromStorage();
       if (adminUser) {
-        try {
-          const parsedUser = JSON.parse(adminUser);
-          console.log('Using admin user from localStorage:', parsedUser);
-          setUser(parsedUser);
-          setIsLoading(false);
-          return;
-        } catch (err) {
-          console.error('Error parsing admin user:', err);
-          localStorage.removeItem('oksnoen-admin-user');
-          // Continue with normal auth flow if admin user parse fails
-        }
+        console.log('Using admin user from localStorage:', adminUser);
+        setUser(adminUser);
+        setIsLoading(false);
+        return;
       }
       
       // Get the current session directly
@@ -59,39 +61,22 @@ export const useAuthState = () => {
       setSession(sessionData.session);
       
       try {
-        console.log('Fetching user profile with ID:', sessionData.session.user.id);
-        const userProfile = await fetchUserProfile(sessionData.session);
-        console.log('Refreshed user profile:', userProfile);
+        const { user: userProfile, error: userError } = await getUserFromSession(sessionData.session);
+        if (userError) {
+          console.warn('Using fallback user creation due to error:', userError);
+        }
         setUser(userProfile);
       } catch (err) {
-        console.error('Error fetching user profile:', err);
+        console.error('Error in user profile refresh:', err);
         // Create a fallback user from session
-        createFallbackUserFromSession(sessionData.session);
+        const fallbackUser = createFallbackUserFromSession(sessionData.session);
+        setUser(fallbackUser);
       }
     } catch (err) {
       console.error('Refresh user error:', err);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Helper function to create a basic user from session data
-  const createFallbackUserFromSession = (userSession: Session) => {
-    console.log('Creating fallback user from session:', userSession.user);
-    const userData = userSession.user;
-    
-    // Extract role from user metadata if available
-    const role = userData.user_metadata?.role || 'leader';
-    
-    const fallbackUser: User = {
-      id: userData.id,
-      name: userData.user_metadata?.firstName || userData.email?.split('@')[0] || 'Bruker',
-      email: userData.email || '',
-      role: role
-    };
-    
-    console.log('Created fallback user:', fallbackUser);
-    setUser(fallbackUser);
   };
 
   // Check for existing user session on mount
@@ -102,29 +87,21 @@ export const useAuthState = () => {
         console.log('Checking authentication status...');
         
         // Check for admin user in localStorage first
-        const adminUser = localStorage.getItem('oksnoen-admin-user');
+        const adminUser = getAdminUserFromStorage();
         if (adminUser) {
-          try {
-            const parsedUser = JSON.parse(adminUser);
-            setUser(parsedUser);
-            setSession(null);
-            console.log('Found admin user in localStorage:', parsedUser);
-            setIsLoading(false);
-            setAuthInitialized(true);
-            return;
-          } catch (err) {
-            console.error('Error parsing admin user:', err);
-            localStorage.removeItem('oksnoen-admin-user');
-            // Continue with normal auth flow
-          }
+          setUser(adminUser);
+          setSession(null);
+          console.log('Found admin user in localStorage:', adminUser);
+          setIsLoading(false);
+          setAuthInitialized(true);
+          return;
         }
         
         // Get the current session from Supabase
-        const { data, error: sessionError } = await supabase.auth.getSession();
+        const { session: currentSession, error: sessionError } = await getCurrentSession();
         
         if (sessionError) {
-          console.error('Session error:', sessionError.message);
-          setError(sessionError.message);
+          setError(sessionError);
           setUser(null);
           setSession(null);
           setIsLoading(false);
@@ -132,19 +109,10 @@ export const useAuthState = () => {
           return;
         }
         
-        console.log('Session check result:', data?.session ? 'Active session' : 'No session');
-        
-        if (data.session) {
-          setSession(data.session);
-          try {
-            console.log('Fetching user profile with session ID:', data.session.user.id);
-            const userProfile = await fetchUserProfile(data.session);
-            console.log('Initial user profile loaded:', userProfile);
-            setUser(userProfile);
-          } catch (profileErr) {
-            console.error('Error loading user profile:', profileErr);
-            createFallbackUserFromSession(data.session);
-          }
+        if (currentSession) {
+          setSession(currentSession);
+          const { user: userProfile } = await getUserFromSession(currentSession);
+          setUser(userProfile);
         } else {
           console.log('No active session found');
           setUser(null);
@@ -172,19 +140,12 @@ export const useAuthState = () => {
         console.log('Auth state changed:', event, newSession?.user?.id);
         
         // If admin user exists in localStorage, prioritize that
-        const adminUser = localStorage.getItem('oksnoen-admin-user');
+        const adminUser = getAdminUserFromStorage();
         if (adminUser) {
-          try {
-            const parsedUser = JSON.parse(adminUser);
-            setUser(parsedUser);
-            setSession(null);
-            setIsLoading(false);
-            return;
-          } catch (err) {
-            console.error('Error parsing admin user:', err);
-            localStorage.removeItem('oksnoen-admin-user');
-            // Continue with normal auth flow
-          }
+          setUser(adminUser);
+          setSession(null);
+          setIsLoading(false);
+          return;
         }
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -193,13 +154,12 @@ export const useAuthState = () => {
           if (newSession) {
             try {
               setIsLoading(true);
-              console.log('Auth change: fetching user profile with ID:', newSession.user.id);
-              const userProfile = await fetchUserProfile(newSession);
-              console.log('User profile updated after auth change:', userProfile);
+              const { user: userProfile } = await getUserFromSession(newSession);
               setUser(userProfile);
             } catch (err) {
               console.error('Error getting user profile on auth change:', err);
-              createFallbackUserFromSession(newSession);
+              const fallbackUser = createFallbackUserFromSession(newSession);
+              setUser(fallbackUser);
             } finally {
               setIsLoading(false);
             }
