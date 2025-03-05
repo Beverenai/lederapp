@@ -16,23 +16,25 @@ const DashboardLayout: React.FC = () => {
       navigate('/', { replace: true });
     }
     
-    // If authenticated and user needs profile completion, redirect them
-    if (!isLoading && isAuthenticated && user && user.id !== '1') {
-      // Log authentication state for debugging
+    // Log authentication state for debugging
+    if (!isLoading) {
       console.log('Auth state in DashboardLayout:', { isAuthenticated, user });
     }
   }, [isAuthenticated, isLoading, user, navigate]);
 
+  // Show improved loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-oksnoen-red text-lg">Laster...</div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="text-oksnoen-red text-lg mb-2">Laster...</div>
+        <div className="text-sm text-gray-500">Henter brukerdata</div>
       </div>
     );
   }
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
+    console.log('Not authenticated, redirecting to login');
     return <Navigate to="/" replace />;
   }
 

@@ -19,6 +19,7 @@ const Index: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <p>Laster...</p>
+        <p className="text-sm text-gray-500 mt-2">Venter på autentisering...</p>
       </div>
     );
   }

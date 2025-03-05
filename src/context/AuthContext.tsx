@@ -64,6 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } catch (err) {
         console.error('Auth error:', err);
       } finally {
+        // Ensure we always set isLoading to false to prevent getting stuck
         setIsLoading(false);
       }
     };
@@ -99,6 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(null);
         }
         
+        // Always ensure loading state is updated
         setIsLoading(false);
       }
     );
