@@ -1,8 +1,21 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoginForm from '@/components/auth/LoginForm';
+import { useAuth } from '@/context/AuthContext';
 
 const Index: React.FC = () => {
+  const { isAuthenticated, authInitialized } = useAuth();
+  const navigate = useNavigate();
+  
+  // Hvis brukeren er autentisert, naviger til dashboard
+  React.useEffect(() => {
+    if (authInitialized && isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate, authInitialized]);
+  
+  // Vis alltid login-skjermen mens vi venter
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-oksnoen-light to-white">
       <div className="w-full max-w-md">
