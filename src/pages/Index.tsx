@@ -1,21 +1,29 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from '@/components/auth/LoginForm';
 import { useAuth } from '@/context/AuthContext';
 
 const Index: React.FC = () => {
-  const { isAuthenticated, authInitialized } = useAuth();
+  const { isAuthenticated, authInitialized, user } = useAuth();
   const navigate = useNavigate();
   
-  // Hvis brukeren er autentisert, naviger til dashboard
-  React.useEffect(() => {
+  // Forcefully redirect authenticated users to dashboard
+  useEffect(() => {
     if (authInitialized && isAuthenticated) {
-      navigate('/dashboard');
+      console.log('User is authenticated, redirecting to dashboard');
+      
+      if (user?.role === 'admin') {
+        navigate('/dashboard/admin');
+      } else if (user?.role === 'nurse') {
+        navigate('/dashboard/nurse');
+      } else {
+        navigate('/dashboard/leader');
+      }
     }
-  }, [isAuthenticated, navigate, authInitialized]);
+  }, [isAuthenticated, navigate, authInitialized, user]);
   
-  // Vis alltid login-skjermen mens vi venter
+  // Show login screen
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-oksnoen-light to-white">
       <div className="w-full max-w-md">

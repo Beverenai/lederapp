@@ -22,6 +22,21 @@ export const useSupabaseAuth = () => {
       
       console.log('Attempting login with email:', email);
       
+      // Special case: admin quick login
+      if (email.toLowerCase() === 'admin' && password === 'admin') {
+        console.log('Admin login detected, bypassing Supabase');
+        const adminUser = {
+          id: '1',
+          name: 'Admin',
+          email: 'admin@oksnoen.no',
+          role: 'admin',
+        };
+        
+        localStorage.setItem('oksnoen-admin-user', JSON.stringify(adminUser));
+        console.log('Admin user set in localStorage');
+        return;
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -54,6 +69,14 @@ export const useSupabaseAuth = () => {
   // Logout function
   const logout = async () => {
     try {
+      console.log('Starting logout process');
+      // Clear admin user if it exists
+      const adminUser = localStorage.getItem('oksnoen-admin-user');
+      if (adminUser) {
+        console.log('Removing admin user from localStorage');
+        localStorage.removeItem('oksnoen-admin-user');
+      }
+      
       await supabase.auth.signOut();
       console.log('Logged out successfully');
       // Session and user will be cleared by the onAuthStateChange handler

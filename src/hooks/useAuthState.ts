@@ -44,6 +44,9 @@ export const useAuthState = () => {
       } finally {
         setIsLoading(false);
       }
+    } else {
+      setUser(null);
+      setIsLoading(false);
     }
   };
 
@@ -60,6 +63,7 @@ export const useAuthState = () => {
           try {
             const parsedUser = JSON.parse(adminUser);
             setUser(parsedUser);
+            setSession(null);
             console.log('Found admin user in localStorage:', parsedUser);
             setIsLoading(false);
             setAuthInitialized(true);
@@ -77,6 +81,8 @@ export const useAuthState = () => {
         if (sessionError) {
           console.error('Session error:', sessionError.message);
           setError(sessionError.message);
+          setUser(null);
+          setSession(null);
           setIsLoading(false);
           setAuthInitialized(true);
           return;
@@ -94,14 +100,18 @@ export const useAuthState = () => {
           } catch (profileErr) {
             console.error('Error loading user profile:', profileErr);
             setError('Failed to load user profile');
+            setUser(null);
           }
         } else {
           console.log('No active session found');
           setUser(null);
+          setSession(null);
         }
       } catch (err) {
         console.error('Auth check error:', err);
         setError('Authentication check failed');
+        setUser(null);
+        setSession(null);
       } finally {
         // Always mark auth as initialized and loading as complete
         setIsLoading(false);

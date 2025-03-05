@@ -45,13 +45,20 @@ const LoginFormContent: React.FC = () => {
   };
 
   const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isSubmitting) {
+      console.log('Already submitting, ignoring');
+      return;
+    }
+    
     if (!validateInputs()) {
-      e.preventDefault();
       return;
     }
     
     try {
       setLoginError('');
+      console.log('Form validation passed, attempting login');
       await handleLogin(e);
     } catch (error: any) {
       console.error('Login form submission error:', error);
