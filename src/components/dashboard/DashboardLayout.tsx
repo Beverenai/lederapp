@@ -8,33 +8,34 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const DashboardLayout: React.FC = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, authInitialized } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // If not authenticated and finished loading, redirect to login
-    if (!isLoading && !isAuthenticated) {
+    console.log('DashboardLayout auth state:', { isAuthenticated, isLoading, authInitialized });
+    
+    // If auth is initialized, not loading, and not authenticated, redirect to login
+    if (authInitialized && !isLoading && !isAuthenticated) {
       console.log('Not authenticated in DashboardLayout, redirecting to login');
       navigate('/', { replace: true });
     }
     
     // Welcome message on successful login
-    if (!isLoading && isAuthenticated && user) {
+    if (authInitialized && !isLoading && isAuthenticated && user) {
       toast.success(`Velkommen, ${user.name || 'bruker'}!`);
     }
-    
-    // Log authentication state for debugging
-    if (!isLoading) {
-      console.log('Auth state in DashboardLayout:', { isAuthenticated, user });
-    }
-  }, [isAuthenticated, isLoading, user, navigate]);
+  }, [isAuthenticated, isLoading, user, navigate, authInitialized]);
 
-  // Show improved loading state
-  if (isLoading) {
+  // Show improved loading state while checking auth
+  if (!authInitialized || isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         <div className="text-oksnoen-red text-lg mb-2">Laster dashboard...</div>
-        <div className="text-sm text-gray-500">Henter brukerdata og innstillinger</div>
+        <div className="text-sm text-gray-500">
+          {!authInitialized 
+            ? "Initialiserer autentisering..." 
+            : "Henter brukerdata og innstillinger..."}
+        </div>
       </div>
     );
   }

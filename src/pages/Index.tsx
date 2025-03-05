@@ -6,17 +6,21 @@ import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
 const Index: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, authInitialized } = useAuth();
   const navigate = useNavigate();
   const [redirectAttempts, setRedirectAttempts] = useState(0);
   
   useEffect(() => {
-    console.log('Index page auth state:', { isAuthenticated, isLoading });
+    console.log('Index page auth state:', { isAuthenticated, isLoading, authInitialized });
     
-    if (!isLoading && isAuthenticated) {
-      console.log('Redirecting to dashboard from Index page');
-      // Redirect to dashboard if already logged in
-      navigate('/dashboard', { replace: true });
+    if (authInitialized && !isLoading && isAuthenticated) {
+      console.log('User is authenticated, redirecting to dashboard');
+      // Use a timeout to ensure state updates have propagated
+      const redirectTimer = setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 500);
+      
+      return () => clearTimeout(redirectTimer);
     }
     
     // Prevent infinite redirect loops
@@ -24,13 +28,21 @@ const Index: React.FC = () => {
       console.error('Too many redirect attempts, might be an authentication issue');
       toast.error('Det oppstod et problem med innloggingen. Prøv igjen senere.');
     }
-  }, [isAuthenticated, isLoading, navigate, redirectAttempts]);
+  }, [isAuthenticated, isLoading, navigate, redirectAttempts, authInitialized]);
   
-  if (isLoading) {
+  // Show more detailed loading state with explicit conditions
+  if (!authInitialized || isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <p>Laster...</p>
-        <p className="text-sm text-gray-500 mt-2">Venter på autentisering...</p>
+        <p className="text-lg font-medium">Laster...</p>
+        <p className="text-sm text-gray-500 mt-2">
+          {!authInitialized 
+            ? "Initialiserer autentisering..." 
+            : "Venter på autentisering..."}
+        </p>
+        <p className="text-xs text-gray-400 mt-4">
+          Dette tar vanligvis bare noen sekunder.
+        </p>
       </div>
     );
   }

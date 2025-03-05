@@ -14,6 +14,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const { isLoading, setIsLoading, error, setError, login, logout } = useSupabaseAuth();
 
   // Function to refresh user data
@@ -41,6 +42,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
+      console.log('Checking authentication status...');
+      
       try {
         // Check for admin user in localStorage first
         const adminUser = localStorage.getItem('oksnoen-admin-user');
@@ -48,24 +51,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log('Found admin user in localStorage:', adminUser);
           setUser(JSON.parse(adminUser));
           setIsLoading(false);
+          setAuthInitialized(true);
           return;
         }
         
         // Get the current session from Supabase
-        const { data } = await supabase.auth.getSession();
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setError(sessionError.message);
+          setIsLoading(false);
+          setAuthInitialized(true);
+          return;
+        }
         
         if (data.session) {
           console.log('Found existing session:', data.session.user.id);
           setSession(data.session);
-          const userProfile = await fetchUserProfile(data.session);
-          console.log('User profile:', userProfile);
-          setUser(userProfile);
+          try {
+            const userProfile = await fetchUserProfile(data.session);
+            console.log('User profile loaded:', userProfile);
+            setUser(userProfile);
+          } catch (profileErr) {
+            console.error('Error loading user profile:', profileErr);
+            setError('Failed to load user profile');
+          }
+        } else {
+          console.log('No active session found');
         }
       } catch (err) {
-        console.error('Auth error:', err);
+        console.error('Auth check error:', err);
+        setError('Authentication check failed');
       } finally {
-        // Ensure we always set isLoading to false to prevent getting stuck
+        // Always mark auth as initialized and loading as complete
         setIsLoading(false);
+        setAuthInitialized(true);
+        console.log('Auth check complete, initialized:', true);
       }
     };
 
@@ -96,7 +118,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(userProfile);
           } catch (err) {
             console.error('Error getting user profile:', err);
-            // Even if there's an error, we should still set isLoading to false
             setUser(null);
           } finally {
             setIsLoading(false);
@@ -112,7 +133,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [setIsLoading]);
+  }, [setIsLoading, setError]);
 
   // Update logout to also clear admin user
   const handleLogout = async () => {
@@ -144,7 +165,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout: handleLogout,
     isAuthenticated,
     session,
-    refreshUser
+    refreshUser,
+    authInitialized
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

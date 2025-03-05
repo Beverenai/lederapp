@@ -37,9 +37,11 @@ export const useLoginForm = () => {
           description: 'Du er nå logget inn som administrator',
         });
         
-        // Use navigate for smoother transition
+        toast.success('Innlogget som admin');
+        
+        // Use direct window.location for more reliable redirect
         setTimeout(() => {
-          navigate('/dashboard/admin', { replace: true });
+          window.location.href = '/dashboard/admin';
         }, 500);
         return;
       }
@@ -54,9 +56,9 @@ export const useLoginForm = () => {
       
       toast.success('Innlogging vellykket!');
       
-      // Navigate to dashboard with a short delay to allow auth state to update
+      // Use direct window.location for more reliable redirect
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        window.location.href = '/dashboard';
       }, 500);
       
     } catch (err: any) {
