@@ -121,7 +121,7 @@ const Sidebar: React.FC = () => {
       
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto px-3 py-2">
-        <SidebarLink to={getDashboardPath()} icon={LayoutDashboard} label="Dashboard" isCollapsed={isCollapsed} />
+        <SidebarLink to={getDashboardPath()} icon={LayoutDashboard} label="Hjem" isCollapsed={isCollapsed} />
         <SidebarLink to="/cabins" icon={Home} label="Hytter" isCollapsed={isCollapsed} />
         <SidebarLink to="/children" icon={Users} label="Barn" isCollapsed={isCollapsed} />
         <SidebarLink to="/activities" icon={ClipboardCheck} label="Aktiviteter" isCollapsed={isCollapsed} />
