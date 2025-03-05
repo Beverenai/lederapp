@@ -69,6 +69,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
+    // Execute the check immediately
     checkAuth();
 
     // Set up listener for auth changes
@@ -95,13 +96,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(userProfile);
           } catch (err) {
             console.error('Error getting user profile:', err);
+            // Even if there's an error, we should still set isLoading to false
+            setUser(null);
+          } finally {
+            setIsLoading(false);
           }
         } else {
           setUser(null);
+          setIsLoading(false);
         }
-        
-        // Always ensure loading state is updated
-        setIsLoading(false);
       }
     );
 

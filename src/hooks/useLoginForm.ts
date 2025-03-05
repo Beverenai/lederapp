@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 export const useLoginForm = () => {
   const [email, setEmail] = useState('');
@@ -10,7 +11,7 @@ export const useLoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { login } = useAuth();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -31,30 +32,43 @@ export const useLoginForm = () => {
         // Set the admin user in context without going through Supabase
         localStorage.setItem('oksnoen-admin-user', JSON.stringify(adminUser));
         
-        toast({
+        uiToast({
           title: 'Innlogget som admin',
           description: 'Du er nå logget inn som administrator',
         });
         
-        // Force reload to trigger the auth state change
-        window.location.href = '/dashboard';
+        // Use navigate for smoother transition
+        setTimeout(() => {
+          navigate('/dashboard/admin', { replace: true });
+        }, 500);
         return;
       }
       
       // Regular Supabase login for other users
       await login(email, password);
-      toast({
+      
+      uiToast({
         title: 'Innlogget',
         description: 'Du er nå logget inn',
       });
-      // Use window.location.href instead of navigate to force a reload
-      window.location.href = '/dashboard';
+      
+      toast.success('Innlogging vellykket!');
+      
+      // Navigate to dashboard with a short delay to allow auth state to update
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 500);
+      
     } catch (err: any) {
-      toast({
+      console.error('Login error:', err);
+      
+      uiToast({
         title: 'Feil ved innlogging',
         description: err.message || 'Kunne ikke logge inn. Prøv igjen.',
         variant: 'destructive',
       });
+      
+      toast.error('Innlogging feilet. Sjekk brukernavn og passord.');
     } finally {
       setIsSubmitting(false);
     }

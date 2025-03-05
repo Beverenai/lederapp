@@ -1,19 +1,30 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from '@/components/auth/LoginForm';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const Index: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [redirectAttempts, setRedirectAttempts] = useState(0);
   
   useEffect(() => {
+    console.log('Index page auth state:', { isAuthenticated, isLoading });
+    
     if (!isLoading && isAuthenticated) {
+      console.log('Redirecting to dashboard from Index page');
       // Redirect to dashboard if already logged in
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate]);
+    
+    // Prevent infinite redirect loops
+    if (!isLoading && isAuthenticated && redirectAttempts > 3) {
+      console.error('Too many redirect attempts, might be an authentication issue');
+      toast.error('Det oppstod et problem med innloggingen. Prøv igjen senere.');
+    }
+  }, [isAuthenticated, isLoading, navigate, redirectAttempts]);
   
   if (isLoading) {
     return (

@@ -5,6 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const DashboardLayout: React.FC = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -13,7 +14,13 @@ const DashboardLayout: React.FC = () => {
   useEffect(() => {
     // If not authenticated and finished loading, redirect to login
     if (!isLoading && !isAuthenticated) {
+      console.log('Not authenticated in DashboardLayout, redirecting to login');
       navigate('/', { replace: true });
+    }
+    
+    // Welcome message on successful login
+    if (!isLoading && isAuthenticated && user) {
+      toast.success(`Velkommen, ${user.name || 'bruker'}!`);
     }
     
     // Log authentication state for debugging
@@ -26,8 +33,8 @@ const DashboardLayout: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="text-oksnoen-red text-lg mb-2">Laster...</div>
-        <div className="text-sm text-gray-500">Henter brukerdata</div>
+        <div className="text-oksnoen-red text-lg mb-2">Laster dashboard...</div>
+        <div className="text-sm text-gray-500">Henter brukerdata og innstillinger</div>
       </div>
     );
   }
