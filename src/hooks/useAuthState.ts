@@ -21,10 +21,13 @@ export const useAuthState = () => {
     const adminUser = localStorage.getItem('oksnoen-admin-user');
     if (adminUser) {
       try {
-        setUser(JSON.parse(adminUser));
+        const parsedUser = JSON.parse(adminUser);
+        setUser(parsedUser);
+        console.log('Using admin user from localStorage');
         return;
       } catch (err) {
         console.error('Error parsing admin user:', err);
+        localStorage.removeItem('oksnoen-admin-user');
         // Continue with normal auth flow if admin user parse fails
       }
     }
@@ -32,7 +35,9 @@ export const useAuthState = () => {
     if (session) {
       try {
         setIsLoading(true);
+        console.log('Refreshing user profile with session:', session.user.id);
         const userProfile = await fetchUserProfile(session);
+        console.log('Refreshed user profile:', userProfile);
         setUser(userProfile);
       } catch (err) {
         console.error('Error refreshing user profile:', err);
@@ -53,8 +58,9 @@ export const useAuthState = () => {
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
           try {
-            setUser(JSON.parse(adminUser));
-            console.log('Found admin user in localStorage');
+            const parsedUser = JSON.parse(adminUser);
+            setUser(parsedUser);
+            console.log('Found admin user in localStorage:', parsedUser);
             setIsLoading(false);
             setAuthInitialized(true);
             return;
@@ -81,13 +87,16 @@ export const useAuthState = () => {
         if (data.session) {
           setSession(data.session);
           try {
+            console.log('Fetching user profile with session ID:', data.session.user.id);
             const userProfile = await fetchUserProfile(data.session);
+            console.log('Initial user profile loaded:', userProfile);
             setUser(userProfile);
-            console.log('User profile loaded:', userProfile?.email);
           } catch (profileErr) {
             console.error('Error loading user profile:', profileErr);
             setError('Failed to load user profile');
           }
+        } else {
+          console.log('No active session found');
         }
       } catch (err) {
         console.error('Auth check error:', err);
@@ -106,13 +115,14 @@ export const useAuthState = () => {
     // Set up listener for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log('Auth state changed:', event);
+        console.log('Auth state changed:', event, newSession?.user?.id);
         
         // If admin user exists in localStorage, prioritize that
         const adminUser = localStorage.getItem('oksnoen-admin-user');
         if (adminUser) {
           try {
-            setUser(JSON.parse(adminUser));
+            const parsedUser = JSON.parse(adminUser);
+            setUser(parsedUser);
             setSession(null);
             setIsLoading(false);
             return;
@@ -129,9 +139,10 @@ export const useAuthState = () => {
           if (newSession) {
             try {
               setIsLoading(true);
+              console.log('Auth change: fetching user profile with ID:', newSession.user.id);
               const userProfile = await fetchUserProfile(newSession);
+              console.log('User profile updated after auth change:', userProfile);
               setUser(userProfile);
-              console.log('User profile updated after auth change:', userProfile?.email);
             } catch (err) {
               console.error('Error getting user profile:', err);
               setUser(null);

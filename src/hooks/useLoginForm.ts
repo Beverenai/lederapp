@@ -19,6 +19,7 @@ export const useLoginForm = () => {
     try {
       // Special case: admin login
       if (email.toLowerCase() === 'admin' && password === 'admin') {
+        console.log('Admin login detected');
         const adminUser = {
           id: '1',
           name: 'Admin',
@@ -35,10 +36,12 @@ export const useLoginForm = () => {
       // Standard email login
       console.log('Attempting login with:', email);
       await login(email, password);
+      
+      console.log('Login successful, waiting for auth state to update');
       toast.success('Innlogging vellykket!');
       
-      // Let the auth state change listener handle the navigation
-      // This prevents race conditions between manual navigation and auth state changes
+      // The navigation will be handled by the auth state change listener in Index.tsx
+      // This prevents race conditions
     } catch (err: any) {
       console.error('Login error:', err);
       toast.error(err.message || 'Innlogging feilet. Sjekk brukernavn og passord.');

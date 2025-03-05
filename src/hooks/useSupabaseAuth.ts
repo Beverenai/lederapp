@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 /**
  * Hook for handling Supabase authentication operations
@@ -10,7 +9,7 @@ export const useSupabaseAuth = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Login function - now returns void as expected by the AuthContext type
+  // Login function - properly returns void as expected by the AuthContext type
   const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     setError(null);
@@ -42,6 +41,7 @@ export const useSupabaseAuth = () => {
       }
       
       console.log('Login successful:', data);
+      // Don't return data, just let the auth state change listener handle it
       return;
     } catch (err: any) {
       console.error('Login process error:', err.message);
@@ -56,6 +56,7 @@ export const useSupabaseAuth = () => {
   const logout = async () => {
     try {
       await supabase.auth.signOut();
+      console.log('Logged out successfully');
       // Session and user will be cleared by the onAuthStateChange handler
     } catch (err) {
       console.error('Logout error:', err);

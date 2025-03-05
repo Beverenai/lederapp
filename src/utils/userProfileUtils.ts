@@ -16,7 +16,7 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
     const userId = userSession.user.id;
     console.log('Fetching profile for user ID:', userId);
     
-    // Get the profile data directly (don't try to access auth.users table)
+    // Get the profile data directly
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -28,9 +28,12 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
       throw profileError;
     }
 
-    // Get metadata from the session's user object instead
+    // Get metadata from the session's user object
     const authUser = userSession.user;
     const metadata = authUser.user_metadata || {};
+    
+    console.log('Profile data:', profile);
+    console.log('Auth user metadata:', metadata);
 
     if (profile) {
       // Convert Supabase profile to our User type
@@ -54,6 +57,7 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
         climbingAbility: profile.climbing_ability as any,
       };
 
+      console.log('Converted user data:', userData);
       return userData;
     } else {
       // If no profile found, create one from auth metadata
@@ -67,6 +71,8 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
         role: 'leader' as UserRole,
       };
       
+      console.log('Creating new profile:', newProfile);
+      
       // Insert the new profile
       const { error: insertError } = await supabase
         .from('profiles')
@@ -74,6 +80,8 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
         
       if (insertError) {
         console.error('Error creating profile:', insertError);
+      } else {
+        console.log('New profile created successfully');
       }
       
       // Set user with basic data - needs to complete profile

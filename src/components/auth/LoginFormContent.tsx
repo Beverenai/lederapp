@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLoginForm } from '@/hooks/useLoginForm';
 import { AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const LoginFormContent: React.FC = () => {
   const { 
@@ -16,8 +17,47 @@ const LoginFormContent: React.FC = () => {
     handleLogin 
   } = useLoginForm();
 
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const validateInputs = () => {
+    let valid = true;
+    
+    // Reset error states
+    setEmailError('');
+    setPasswordError('');
+    
+    // Validate email
+    if (!email) {
+      setEmailError('E-post er påkrevd');
+      valid = false;
+    }
+    
+    // Validate password
+    if (!password) {
+      setPasswordError('Passord er påkrevd');
+      valid = false;
+    }
+    
+    return valid;
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    if (!validateInputs()) {
+      e.preventDefault();
+      return;
+    }
+    
+    try {
+      await handleLogin(e);
+    } catch (error) {
+      console.error('Login form submission error:', error);
+      toast.error('Kunne ikke logge inn. Vennligst prøv igjen.');
+    }
+  };
+
   return (
-    <form onSubmit={handleLogin} className="space-y-4 mt-4">
+    <form onSubmit={onSubmit} className="space-y-4 mt-4">
       <div className="space-y-2">
         <Label htmlFor="email">E-post</Label>
         <Input
@@ -27,10 +67,11 @@ const LoginFormContent: React.FC = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full"
+          className={`w-full ${emailError ? 'border-red-500' : ''}`}
           disabled={isSubmitting}
           autoComplete="email"
         />
+        {emailError && <p className="text-red-500 text-xs">{emailError}</p>}
       </div>
       <div className="space-y-2">
         <div className="flex justify-between items-center">
@@ -46,10 +87,11 @@ const LoginFormContent: React.FC = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full"
+          className={`w-full ${passwordError ? 'border-red-500' : ''}`}
           disabled={isSubmitting}
           autoComplete="current-password"
         />
+        {passwordError && <p className="text-red-500 text-xs">{passwordError}</p>}
       </div>
       
       {/* Info about test account */}
