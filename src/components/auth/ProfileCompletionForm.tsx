@@ -23,6 +23,7 @@ const ProfileCompletionForm = () => {
   
   // Form data states
   const [phone, setPhone] = useState(user?.phone || '');
+  const [age, setAge] = useState<number | undefined>(user?.age || undefined);
   const [hasDriverLicense, setHasDriverLicense] = useState(user?.hasDriverLicense || false);
   const [hasCar, setHasCar] = useState(user?.hasCar || false);
   const [hasBoatLicense, setHasBoatLicense] = useState(user?.hasBoatLicense || false);
@@ -56,6 +57,7 @@ const ProfileCompletionForm = () => {
       // Update profile in Supabase
       await updateUserProfile(user.id, {
         phone,
+        age: age || null,
         has_driving_license: hasDriverLicense,
         has_car: hasCar,
         has_boat_license: hasBoatLicense,
@@ -113,6 +115,21 @@ const ProfileCompletionForm = () => {
                 placeholder="f.eks. 98765432" 
                 value={phone} 
                 onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+            </div>
+            
+            {/* Age Field */}
+            <div className="space-y-2">
+              <Label htmlFor="age">Alder</Label>
+              <Input 
+                id="age" 
+                type="number" 
+                placeholder="Skriv inn alderen din" 
+                value={age || ''}
+                onChange={(e) => setAge(e.target.value ? parseInt(e.target.value) : undefined)}
+                min={16}
+                max={100}
                 required
               />
             </div>

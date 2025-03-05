@@ -50,6 +50,7 @@ export const updateUserProfile = async (
   userId: string, 
   profileData: {
     phone: string;
+    age: number | null;
     has_driving_license: boolean;
     has_car: boolean;
     has_boat_license: boolean;
@@ -98,6 +99,7 @@ export const updateUserProfile = async (
     const { error: metadataError } = await supabase.auth.updateUser({
       data: {
         phone: profileData.phone,
+        age: profileData.age,
         hasDriverLicense: profileData.has_driving_license,
         hasCar: profileData.has_car,
         hasBoatLicense: profileData.has_boat_license,
