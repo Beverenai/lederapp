@@ -22,7 +22,7 @@ const LoginFormContent: React.FC = () => {
         <Input
           id="email"
           type="text"
-          placeholder="Admin eller din e-postadresse"
+          placeholder="Din e-postadresse"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
