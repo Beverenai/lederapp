@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLoginForm } from '@/hooks/useLoginForm';
-import { AlertCircle } from 'lucide-react';
 
 const LoginFormContent: React.FC = () => {
   const { 
@@ -19,17 +18,15 @@ const LoginFormContent: React.FC = () => {
   return (
     <form onSubmit={handleLogin} className="space-y-4 mt-4">
       <div className="space-y-2">
-        <Label htmlFor="email">E-post</Label>
+        <Label htmlFor="email">Brukernavn eller e-post</Label>
         <Input
           id="email"
-          type="email"
+          type="text"
           placeholder="Din e-postadresse"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           className="w-full"
-          disabled={isSubmitting}
-          autoComplete="email"
         />
       </div>
       <div className="space-y-2">
@@ -47,20 +44,8 @@ const LoginFormContent: React.FC = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
           className="w-full"
-          disabled={isSubmitting}
-          autoComplete="current-password"
         />
       </div>
-      
-      {/* Info about test account */}
-      <div className="text-xs text-gray-500 italic flex items-start gap-1">
-        <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-        <span>
-          Du kan også logge inn med testkonto:<br />
-          E-post: <strong>admin</strong>, Passord: <strong>admin</strong>
-        </span>
-      </div>
-      
       <Button 
         type="submit" 
         className="w-full bg-oksnoen-red hover:bg-oksnoen-red/90 text-white"

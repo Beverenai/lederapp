@@ -86,10 +86,6 @@ export const updateUserProfile = async (
     zipline_ability: string;
     climbing_ability: string;
     avatar_url: string | null;
-    first_name?: string;
-    last_name?: string;
-    notes?: string;
-    team?: string;
   }
 ) => {
   try {
@@ -109,10 +105,7 @@ export const updateUserProfile = async (
         rappellingAbility: profileData.rappelling_ability,
         ziplineAbility: profileData.zipline_ability,
         climbingAbility: profileData.climbing_ability,
-        image: profileData.avatar_url,
-        name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
-        notes: profileData.notes,
-        team: profileData.team
+        image: profileData.avatar_url
       };
       
       localStorage.setItem('oksnoen-admin-user', JSON.stringify(updatedAdminUser));
@@ -154,11 +147,7 @@ export const updateUserProfile = async (
           rappelling_ability: profileData.rappelling_ability,
           zipline_ability: profileData.zipline_ability,
           climbing_ability: profileData.climbing_ability,
-          avatar_url: profileData.avatar_url,
-          first_name: profileData.first_name,
-          last_name: profileData.last_name,
-          notes: profileData.notes,
-          team: profileData.team
+          avatar_url: profileData.avatar_url
         });
       
       if (insertError) {
@@ -170,21 +159,7 @@ export const updateUserProfile = async (
       console.log('Updating existing profile for user', userId);
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          phone: profileData.phone,
-          age: profileData.age,
-          has_driving_license: profileData.has_driving_license,
-          has_car: profileData.has_car,
-          has_boat_license: profileData.has_boat_license,
-          rappelling_ability: profileData.rappelling_ability,
-          zipline_ability: profileData.zipline_ability,
-          climbing_ability: profileData.climbing_ability,
-          avatar_url: profileData.avatar_url,
-          first_name: profileData.first_name,
-          last_name: profileData.last_name,
-          notes: profileData.notes,
-          team: profileData.team
-        })
+        .update(profileData)
         .eq('id', userId);
       
       if (updateError) {
@@ -203,9 +178,7 @@ export const updateUserProfile = async (
         hasBoatLicense: profileData.has_boat_license,
         rappellingAbility: profileData.rappelling_ability,
         ziplineAbility: profileData.zipline_ability,
-        climbingAbility: profileData.climbing_ability,
-        firstName: profileData.first_name,
-        lastName: profileData.last_name
+        climbingAbility: profileData.climbing_ability
       }
     });
     

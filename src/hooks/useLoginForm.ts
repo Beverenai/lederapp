@@ -1,8 +1,8 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
 
 export const useLoginForm = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +10,7 @@ export const useLoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { login } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -17,8 +18,9 @@ export const useLoginForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Special case: admin login
+      // Check for admin credentials
       if (email.toLowerCase() === 'admin' && password === 'admin') {
+        // Use the mock admin user from our data
         const adminUser = {
           id: '1',
           name: 'Admin',
@@ -26,22 +28,31 @@ export const useLoginForm = () => {
           role: 'admin',
         };
         
+        // Set the admin user in context without going through Supabase
         localStorage.setItem('oksnoen-admin-user', JSON.stringify(adminUser));
-        toast.success('Innlogget som admin');
-        navigate('/dashboard/admin');
+        
+        toast({
+          title: 'Innlogget som admin',
+          description: 'Du er nå logget inn som administrator',
+        });
+        
+        navigate('/dashboard');
         return;
       }
       
-      // Standard email login
-      console.log('Attempting login with:', email);
+      // Regular Supabase login for other users
       await login(email, password);
-      toast.success('Innlogging vellykket!');
-      
-      // Let the auth state change listener handle the navigation
-      // This prevents race conditions between manual navigation and auth state changes
+      toast({
+        title: 'Innlogget',
+        description: 'Du er nå logget inn',
+      });
+      navigate('/dashboard');
     } catch (err: any) {
-      console.error('Login error:', err);
-      toast.error(err.message || 'Innlogging feilet. Sjekk brukernavn og passord.');
+      toast({
+        title: 'Feil ved innlogging',
+        description: err.message || 'Kunne ikke logge inn. Prøv igjen.',
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
     }

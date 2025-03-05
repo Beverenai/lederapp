@@ -12,8 +12,7 @@ export interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   session: Session | null;
-  refreshUser: () => Promise<void>;
-  authInitialized: boolean;
+  refreshUser: () => Promise<void>; // Add the refreshUser function
 }
 
 // Define the provider props
