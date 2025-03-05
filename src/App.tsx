@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import ProfileCompletion from "./pages/ProfileCompletion"; 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
@@ -57,6 +58,31 @@ const DashboardSelector = () => {
   }
 };
 
+// Component to check if profile needs completion
+const ProfileCompletionCheck = ({ children }: { children: JSX.Element }) => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div>Laster...</div>;
+  }
+  
+  // Check if essential profile data is missing
+  const needsProfileCompletion = 
+    user && 
+    (!user.phone || 
+     user.hasDriverLicense === undefined || 
+     user.hasBoatLicense === undefined ||
+     user.rappellingAbility === undefined ||
+     user.ziplineAbility === undefined ||
+     user.climbingAbility === undefined);
+  
+  if (needsProfileCompletion) {
+    return <Navigate to="/profile-completion" replace />;
+  }
+  
+  return children;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -67,8 +93,24 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route 
+              path="/profile-completion" 
+              element={
+                <ProtectedRoute 
+                  element={<ProfileCompletion />} 
+                  allowedRoles={['admin', 'nurse', 'leader']} 
+                />
+              } 
+            />
             
-            <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProfileCompletionCheck>
+                  <DashboardLayout />
+                </ProfileCompletionCheck>
+              }
+            >
               <Route index element={<DashboardSelector />} />
               <Route 
                 path="admin" 

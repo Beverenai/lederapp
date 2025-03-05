@@ -64,16 +64,40 @@ export const fetchUserProfile = async (userSession: Session): Promise<User | nul
         console.error('Error creating profile:', insertError);
       }
       
-      // Set user with basic data
+      // Set user with basic data - needs to complete profile
       return {
         id: authUser.id,
         name: `${metadata.firstName || ''} ${metadata.lastName || ''}`.trim(),
         email: authUser.email || '',
         role: 'leader',
+        // These fields are intentionally undefined to trigger profile completion
+        phone: undefined,
+        hasDriverLicense: undefined,
+        hasCar: undefined,
+        hasBoatLicense: undefined,
+        rappellingAbility: undefined,
+        ziplineAbility: undefined,
+        climbingAbility: undefined
       };
     }
   } catch (err) {
     console.error('Error fetching user profile:', err);
     return null;
   }
+};
+
+/**
+ * Checks if a user profile needs completion
+ */
+export const needsProfileCompletion = (user: User | null): boolean => {
+  if (!user) return false;
+  
+  return (
+    !user.phone || 
+    user.hasDriverLicense === undefined || 
+    user.hasBoatLicense === undefined ||
+    user.rappellingAbility === undefined ||
+    user.ziplineAbility === undefined ||
+    user.climbingAbility === undefined
+  );
 };

@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,6 +13,7 @@ export const useRegisterForm = (onSuccess: () => void) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const clearForm = () => {
     setFirstName('');
@@ -51,7 +53,7 @@ export const useRegisterForm = (onSuccess: () => void) => {
         
         if (nameMatches) {
           // If names match, try to set password for this user
-          const { error: signupError } = await supabase.auth.signUp({
+          const { data, error: signupError } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -66,12 +68,22 @@ export const useRegisterForm = (onSuccess: () => void) => {
           
           toast({
             title: 'Konto oppdatert',
-            description: 'Du har lagt til et passord for din eksisterende konto. Du kan nå logge inn.',
+            description: 'Du har lagt til et passord for din eksisterende konto. Du vil nå bli bedt om å fullføre profilen din.',
           });
           
-          // Clear registration form and switch to login tab
+          // Clear registration form and log the user in
           clearForm();
-          onSuccess();
+          
+          // Auto-login after registration
+          const { error: loginError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          
+          if (loginError) throw loginError;
+          
+          // Redirect to profile completion
+          navigate('/profile-completion');
         } else {
           // Names don't match - this is a conflict
           toast({
@@ -112,12 +124,22 @@ export const useRegisterForm = (onSuccess: () => void) => {
         
         toast({
           title: 'Registrering vellykket',
-          description: 'Din konto er opprettet. Du kan nå logge inn.',
+          description: 'Din konto er opprettet. Du vil nå bli bedt om å fullføre profilen din.',
         });
         
-        // Clear registration form and switch to login tab
+        // Clear registration form and sign in
         clearForm();
-        onSuccess();
+        
+        // Auto-login after registration
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        if (loginError) throw loginError;
+        
+        // Redirect to profile completion
+        navigate('/profile-completion');
       }
     } catch (err: any) {
       console.error('Registration error:', err);
