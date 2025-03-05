@@ -13,6 +13,13 @@ export interface User {
   notes?: string; // Notater spesifikt for lederen
   activities?: string[]; // Aktiviteter lederen kan lede
   team?: string; // Teamet lederen tilhører
+  phone?: string; // Telefonnummer
+  hasDriverLicense?: boolean; // Har førerkort
+  hasCar?: boolean; // Har bil
+  hasBoatLicense?: boolean; // Har båtlappen
+  rappellingAbility?: 'Ja' | 'Nei' | 'Nesten'; // Kan rapellering
+  ziplineAbility?: 'Ja' | 'Nei' | 'Nesten'; // Kan tbane-oppsett
+  climbingAbility?: 'Ja' | 'Nei' | 'Nesten'; // Kan klatring
 }
 
 export interface Child {

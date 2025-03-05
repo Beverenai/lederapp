@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { User, UserRole } from '@/types/models';
 import { mockUsers, mockCabins } from '@/data/mockData';
 import { Pencil } from 'lucide-react';
@@ -193,12 +194,14 @@ const LeaderEditDialog = ({ leader, onSave }: LeaderEditDialogProps) => {
     handleChange('activities', activitiesArray);
   };
 
+  const abilityOptions = ['Ja', 'Nei', 'Nesten'];
+
   return (
-    <DialogContent className="max-w-3xl">
+    <DialogContent className="max-w-4xl">
       <DialogHeader>
         <DialogTitle>Rediger Lederinformasjon</DialogTitle>
       </DialogHeader>
-      <div className="grid grid-cols-2 gap-6 py-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Navn</Label>
@@ -215,6 +218,15 @@ const LeaderEditDialog = ({ leader, onSave }: LeaderEditDialogProps) => {
               id="email" 
               value={editedLeader.email} 
               onChange={(e) => handleChange('email', e.target.value)} 
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phone">Telefon</Label>
+            <Input 
+              id="phone" 
+              value={editedLeader.phone || ''} 
+              onChange={(e) => handleChange('phone', e.target.value || undefined)} 
             />
           </div>
           
@@ -273,9 +285,106 @@ const LeaderEditDialog = ({ leader, onSave }: LeaderEditDialogProps) => {
               onChange={(e) => handleChange('team', e.target.value || undefined)} 
             />
           </div>
+          
+          <div className="flex flex-col space-y-4">
+            <Label>Sertifikater og Tilgjengelighet</Label>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="hasDriverLicense" 
+                checked={editedLeader.hasDriverLicense || false}
+                onCheckedChange={(checked) => 
+                  handleChange('hasDriverLicense', checked === true ? true : false)
+                }
+              />
+              <Label htmlFor="hasDriverLicense">Har førerkort</Label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="hasCar" 
+                checked={editedLeader.hasCar || false}
+                onCheckedChange={(checked) => 
+                  handleChange('hasCar', checked === true ? true : false)
+                }
+              />
+              <Label htmlFor="hasCar">Har bil</Label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="hasBoatLicense" 
+                checked={editedLeader.hasBoatLicense || false}
+                onCheckedChange={(checked) => 
+                  handleChange('hasBoatLicense', checked === true ? true : false)
+                }
+              />
+              <Label htmlFor="hasBoatLicense">Har båtlappen</Label>
+            </div>
+          </div>
         </div>
         
         <div className="space-y-4">
+          <div className="space-y-4">
+            <Label>Ferdigheter</Label>
+            
+            <div className="space-y-2">
+              <Label htmlFor="rappellingAbility">Kan rapellering</Label>
+              <Select 
+                value={editedLeader.rappellingAbility || 'Nei'} 
+                onValueChange={(value) => handleChange('rappellingAbility', value as 'Ja' | 'Nei' | 'Nesten')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Velg nivå" />
+                </SelectTrigger>
+                <SelectContent>
+                  {abilityOptions.map(option => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="ziplineAbility">Kan tbane-oppsett</Label>
+              <Select 
+                value={editedLeader.ziplineAbility || 'Nei'} 
+                onValueChange={(value) => handleChange('ziplineAbility', value as 'Ja' | 'Nei' | 'Nesten')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Velg nivå" />
+                </SelectTrigger>
+                <SelectContent>
+                  {abilityOptions.map(option => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="climbingAbility">Kan klatring</Label>
+              <Select 
+                value={editedLeader.climbingAbility || 'Nei'} 
+                onValueChange={(value) => handleChange('climbingAbility', value as 'Ja' | 'Nei' | 'Nesten')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Velg nivå" />
+                </SelectTrigger>
+                <SelectContent>
+                  {abilityOptions.map(option => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="skills">Ferdigheter (kommaseparert)</Label>
             <Textarea 
